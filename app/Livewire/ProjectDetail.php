@@ -12,6 +12,7 @@ use Livewire\Component;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Services\AIService;
 use Illuminate\Support\Facades\DB;
 
 class ProjectDetail extends Component
@@ -69,23 +70,23 @@ class ProjectDetail extends Component
      */
     public function updateProjectBackend(string $requestText)
     {
+        $user = auth()->user();
+        $workspace = $user->currentWorkspace;
+
+        if (!$workspace) {
+            return ['error' => 'Silakan pilih atau buat workspace terlebih dahulu.'];
+        }
+
+        if ($workspace->tokens_balance < 10) {
+            return ['error' => 'Saldo koin Anda tidak mencukupi untuk mengubah proyek (Dibutuhkan 10 Kredit).'];
+        }
+
         if (empty(trim($requestText))) {
             return ['error' => 'Permintaan perubahan tidak boleh kosong.'];
         }
 
         @set_time_limit(180);
-        $provider = config('services.ai.provider', 'iyh');
-        $providerConfig = config("services.ai.providers.{$provider}");
-        
-        if (empty($providerConfig) || empty($providerConfig['key'])) {
-            Log::error("API key is not configured for provider: {$provider} in .env file.");
-            return [
-                'error' => "API Key untuk provider '" . strtoupper($provider) . "' belum diisi di berkas .env Anda."
-            ];
-        }
-
-        $apiKey = $providerConfig['key'];
-        $model = $providerConfig['model'];
+        // API key loading and configurations are handled within AIService
 
         // 1. Gather current state of the project
         $currentState = "PROYEK SEBELUMNYA:\n";
@@ -184,112 +185,28 @@ JSON Structure:
 }";
 
         // 3. Make API Request
-        $rawJson = '';
         try {
-            if ($provider === 'gemini') {
-                $response = Http::timeout(120)->post(
-                    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey,
-                    [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $prompt]
-                                ]
-                            ]
-                        ],
-                        'generationConfig' => [
-                            'responseMimeType' => 'application/json'
-                        ]
-                    ]
-                );
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                } else {
-                    Log::error('Gemini API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } elseif (in_array($provider, ['openai', 'xai', 'deepseek', 'openrouter', 'iyh'])) {
-                $endpoints = [
-                    'openai' => 'https://api.openai.com/v1/chat/completions',
-                    'xai' => 'https://api.x.ai/v1/chat/completions',
-                    'deepseek' => 'https://api.deepseek.com/chat/completions',
-                    'openrouter' => 'https://openrouter.ai/api/v1/chat/completions',
-                    'iyh' => 'https://api.iyh.app/v1/chat/completions',
-                ];
-
-                $request = Http::timeout(120)->withToken($apiKey);
-                
-                if ($provider === 'openrouter') {
-                    $request->withHeaders([
-                        'HTTP-Referer' => config('app.url', 'http://localhost:8000'),
-                        'X-Title' => config('app.name', 'BuatJalan'),
-                    ]);
-                }
-
-                $response = $request->post($endpoints[$provider], [
-                    'model' => $model,
-                    'messages' => [
-                        ['role' => 'user', 'content' => $prompt]
-                    ],
-                    'response_format' => ['type' => 'json_object']
-                ]);
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['choices'][0]['message']['content'] ?? '';
-                } else {
-                    Log::error(strtoupper($provider) . ' API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } elseif ($provider === 'anthropic') {
-                $response = Http::timeout(120)
-                    ->withHeaders([
-                        'x-api-key' => $apiKey,
-                        'anthropic-version' => '2023-06-01',
-                        'content-type' => 'application/json',
-                    ])
-                    ->post('https://api.anthropic.com/v1/messages', [
-                        'model' => $model,
-                        'max_tokens' => 4000,
-                        'messages' => [
-                            ['role' => 'user', 'content' => $prompt]
-                        ]
-                    ]);
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['content'][0]['text'] ?? '';
-                } else {
-                    Log::error('Anthropic API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } else {
-                return ['error' => "Provider AI '" . strtoupper($provider) . "' tidak didukung."];
+            $aiResult = AIService::call($prompt);
+            if (isset($aiResult['error'])) {
+                return ['error' => $aiResult['error']];
             }
-
-            // Clean up code block ticks
-            $rawJson = trim($rawJson);
-            if (Str::startsWith($rawJson, '```json')) {
-                $rawJson = Str::after($rawJson, '```json');
-            }
-            if (Str::endsWith($rawJson, '```')) {
-                $rawJson = Str::beforeLast($rawJson, '```');
-            }
-            $rawJson = trim($rawJson);
-
-            $data = json_decode($rawJson, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE || empty($data['title'])) {
-                Log::error("Failed to parse update JSON response from {$provider}. Raw response: " . $rawJson);
-                return ['error' => 'Gagal melakukan parsing JSON dari model AI. Silakan coba lagi.'];
-            }
+            $data = $aiResult['data'];
 
             // Append change log to PRD
             if (!empty($data['prd_markdown'])) {
                 $data['prd_markdown'] .= "\n\n## 📝 AI Change Request History\n- **Request**: \"" . e($requestText) . "\"\n- **Status**: Completed at " . now()->format('Y-m-d H:i:s');
             }
+
+            // Deduct tokens and log transaction
+            $workspace->decrement('tokens_balance', 10);
+            
+            \App\Models\WorkspaceTransaction::create([
+                'workspace_id' => $workspace->id,
+                'user_id' => $user->id,
+                'type' => 'modification',
+                'amount' => -10,
+                'description' => "Mengubah Proyek: {$data['title']} (-10 Kredit)",
+            ]);
 
             // 4. Save updates via transaction
             DB::transaction(function () use ($data) {

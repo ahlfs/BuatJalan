@@ -1,59 +1,58 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/assets/icon-images/buatjalan-icon.png" width="100" height="100" style="border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" alt="BuatJalan Logo">
 </p>
 
-## About Laravel
+<h1 align="center">BuatJalan - PRD & Dev Roadmap Generator</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <strong>BuatJalan</strong> adalah platform SaaS berbasis kecerdasan buatan (AI) yang dirancang khusus untuk mempermudah developer dan product manager dalam merancang arsitektur aplikasi secara instan. Berikut adalah rincian fitur-fitur lengkap yang telah diimplementasikan dalam proyek ini:
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🌟 Rincian Fitur Platform
 
-## Learning Laravel
+### 1. Autentikasi OAuth & Integrasi Sosial (Socialite)
+* **Login Multi-Provider**: Memungkinkan pengguna masuk secara aman menggunakan akun Google atau GitHub melalui integrasi Laravel Socialite.
+* **Deteksi Integrasi Akun**: Sistem secara dinamis mendeteksi apakah akun pengguna saat ini sudah terhubung ke Google atau GitHub, dan menyajikan opsi untuk menghubungkannya di dalam menu pengaturan jika belum terhubung.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 2. Manajemen Workspace & Kolaborasi Tim
+* **Multi-Workspace**: Pengguna dapat membuat beberapa ruang kerja (Workspace) terpisah untuk mengelola proyek yang berbeda.
+* **Workspace Switcher**: Navigasi cepat untuk berpindah workspace secara dinamis dari sidebar tanpa reload halaman.
+* **Kolaborasi Tim & Undang Anggota**: Pemilik workspace dapat mengundang anggota tim baru menggunakan email kolaborator.
+* **Pembatalan Undangan**: Tersedia dialog konfirmasi kustom bertema gelap untuk membatalkan undangan kolaborasi yang belum diterima oleh penerima.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. AI Project Architect (PRD & Roadmap Generator)
+* **Rancangan Spesifikasi AI**: Menghasilkan spesifikasi teknis lengkap yang mencakup Tech Stack, rancangan Database Schema relasional, dan langkah pengerjaan Roadmap secara detail.
+* **Product Requirement Document (PRD)**: Mengenerasi PRD berformat Markdown yang komprehensif untuk mendefinisikan ruang lingkup proyek.
+* **Modifikasi Proyek Berbasis AI**: Pengguna dapat mengajukan instruksi perubahan (misal: *"Ubah database dari MySQL ke PostgreSQL"* atau *"Tambahkan fitur login multi-role"*) di mana AI akan memproses ulang spesifikasi secara otomatis.
+* **Ubah Nama & Deskripsi Proyek**: Pengaturan langsung untuk mengedit judul dan ringkasan proyek melalui modal dialog edit info.
 
-## Laravel Sponsors
+### 4. Sistem Kredit SaaS & Simulasi Pembayaran QRIS (Midtrans)
+* **Sistem Saldo Token**: Setiap pembuatan atau pembaruan spesifikasi proyek membutuhkan token kredit yang didebet langsung dari saldo workspace.
+* **Checkout Modal Premium**: Dialog pengisian saldo token dengan animasi loading interaktif yang menyimulasikan gerbang pembayaran secure Midtrans.
+* **Simulasi Pembayaran QRIS**: Menampilkan gambar kode QRIS fiktif berukuran besar yang memenuhi modal secara responsif.
+* **Overlay Centang Sukses "Lunas"**: Ketika transaksi terverifikasi (simulasi), kode QRIS otomatis memudar dan memunculkan animasi centang hijau memantul (*bouncing checkmark*) serta tulisan "Lunas" di atas gambar.
+* **Unduh Gambar QRIS**: Tombol frontend yang memungkinkan pengguna untuk langsung mengunduh gambar kode QRIS ke penyimpanan lokal mereka.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 5. Halaman Analytics & Radar Teknologi
+* **Visualisasi Distribusi Teknologi**: Grafik Radar Teknologi yang memetakan persentase sebaran tech stack proyek di workspace saat ini.
+* **Keyword Filtering & Auto Splitting**: Menggunakan pencocokan kata kunci pintar untuk menyaring nama teknologi (misal: *"Postgres"* menjadi *"PostgreSQL"*) dan memecah nama komposit (misal: *"Kotlin & MySQL"* dihitung sebagai dua entitas terpisah: "Kotlin" dan "MySQL").
+* **Log Aktivitas Scrollable**: Log mutasi kredit dan pembuatan modul AI disajikan dalam bentuk timeline yang dapat digulir (*scrollable*) secara independen dengan batas tinggi maksimal `520px` agar tidak mengganggu tata letak keseluruhan halaman.
 
-### Premium Partners
+### 6. Pengaturan Profil & Visual Settings Modal
+* **Edit Profil Instan**: Formulir terisolasi di tab General yang memungkinkan pengguna mengubah nama profil mereka secara langsung tanpa memicu popup *"Save Password"* dari browser.
+* **Notifikasi Toast Melayang**: Memunculkan toast sukses beranimasi hijau di pojok kanan bawah setelah berhasil melakukan pembaruan profil yang otomatis menghilang dalam 4 detik.
+* **Toggle Dark Mode Interaktif**: Desain sakelar visual (*switch*) premium di sisi frontend yang dapat digeser aktif-nonaktif secara interaktif dengan efek transisi yang sangat mulus.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 7. Tautan Berbagi Publik & Ekspor Konteks AI (Markdown)
+* **Public Shared Link**: Tombol "Salin Tautan Context (Link)" di dashboard menyalin URL publik (`/shared/project/{slug}`) yang dapat diakses oleh siapa saja tanpa perlu login.
+* **Halaman Web Publik Premium**: Halaman statis premium khusus untuk menyajikan tech stack, database schema, prd, dan roadmap secara rapi kepada pihak eksternal.
+* **AI Raw Context Endpoint**: Menyediakan rute data mentah (`/shared/project/{slug}?format=raw`) dengan respons `Content-Type: text/plain` berisi kode Markdown bersih terstruktur agar mudah dibaca oleh AI coding agent lainnya untuk langsung menghasilkan baris kode.
+* **Tombol Copy & Download Lokal**: Tombol sekali-klik di halaman publik untuk langsung menyalin raw Markdown ke clipboard atau mengunduh berkas fisik `.md` secara offline.
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 8. Penanganan Error Kustom Bertema Gelap
+* **Custom Error Pages**: Desain kustom elegan dengan efek pendaran cahaya (*glowing backdrop*) dan tombol navigasi kembali ke beranda untuk halaman:
+  * **404 (Not Found)**: Efek pendaran hijau/emerald.
+  * **403 (Forbidden)**: Efek pendaran kuning/amber.
+  * **500 (Internal Server Error)**: Efek pendaran merah.

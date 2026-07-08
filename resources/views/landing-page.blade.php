@@ -9,24 +9,64 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="bg-zinc-950 scroll-smooth">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="bg-zinc-950 scroll-smooth custom-scrollbar">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <!-- SEO Meta Tags Dasar -->
         <title>BuatJalan - AI PRD & Dev Roadmap Generator</title>
+        <meta name="description" content="BuatJalan membantu developer pemula & vibecoders merancang PRD (Product Requirement Document) serta Roadmap Development lengkap menggunakan AI. Mulai ngoding tanpa tersesat!">
+        <meta name="keywords" content="AI PRD Generator, AI Dev Roadmap, Pembuat Alur Kerja Aplikasi, Tech Stack Generator, Pembuat Aplikasi AI, BuatJalan">
+        <meta name="author" content="BuatJalan">
+        <link rel="canonical" href="{{ url()->current() }}">
 
-        <!-- Fonts -->
+        <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:title" content="BuatJalan - AI PRD & Dev Roadmap Generator">
+        <meta property="og:description" content="Rancang PRD dan Roadmap Development aplikasi Anda secara instan dengan kecerdasan AI. Langsung ngoding tanpa pusing alur!">
+        <meta property="og:image" content="{{ asset('assets/icon-images/buatjalan-icon.png') }}">
+
+        <!-- Twitter / X -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="BuatJalan - AI PRD & Dev Roadmap Generator">
+        <meta name="twitter:description" content="Rancang PRD dan Roadmap Development aplikasi Anda secara instan dengan AI.">
+        <meta name="twitter:image" content="{{ asset('assets/icon-images/buatjalan-icon.png') }}">
+
+        <!-- Fonts & Favicon -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/icon-images/buatjalan-icon.png') }}">
 
         <!-- Styles / Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        <!-- Structured Data (Schema.org JSON-LD) -->
+        <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebApplication",
+          "name": "BuatJalan",
+          "alternateName": "BuatJalan AI",
+          "url": "{{ url('/') }}",
+          "logo": "{{ asset('assets/icon-images/buatjalan-icon.png') }}",
+          "description": "Platform AI untuk merancang Product Requirement Document (PRD) dan roadmap pengembangan software untuk developer pemula dan profesional.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@@type": "Offer",
+            "price": "0",
+            "priceCurrency": "IDR"
+          }
+        }
+        </script>
     </head>
     <body class="bg-zinc-950 text-white min-h-screen font-sans antialiased overflow-x-hidden">
         <main class="w-full">
-            
+
             <div class="relative w-full bg-zinc-950 text-white overflow-hidden font-sans">
                 {{-- SCOPED ANIMATIONS --}}
                 <style>
@@ -73,7 +113,7 @@
                 </style>
 
                 {{-- Background Image with Gradient Mask --}}
-                <div class="absolute inset-0 z-0 bg-[url(https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/a72ca2f3-9dd1-4fe4-84ba-fe86468a5237_3840w.webp?w=800&q=80)] bg-cover bg-center opacity-40" 
+                <div class="absolute inset-0 z-0 bg-[url(https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/a72ca2f3-9dd1-4fe4-84ba-fe86468a5237_3840w.webp?w=800&q=80)] bg-cover bg-center opacity-40"
                      style="mask-image: linear-gradient(180deg, transparent, black 0%, black 70%, transparent);
                             -webkit-mask-image: linear-gradient(180deg, transparent, black 0%, black 70%, transparent);">
                 </div>
@@ -108,7 +148,12 @@
                             </div>
 
                             {{-- Heading --}}
-                            <h1 class="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]" 
+                            <div class="animate-fade-in delay-100">
+                                <span class="text-xs font-bold tracking-wider uppercase text-yellow-500/90 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full">
+                                    #1 Generator PRD & Roadmap Developer Berbasis AI
+                                </span>
+                            </div>
+                            <h1 class="animate-fade-in delay-200 text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium tracking-tighter leading-[0.9]"
                                 style="mask-image: linear-gradient(180deg, black 0%, black 80%, transparent 100%);
                                        -webkit-mask-image: linear-gradient(180deg, black 0%, black 80%, transparent 100%);">
                                 Dari Ide ke Aplikasi,<br />
@@ -126,7 +171,7 @@
                             {{-- CTA Buttons --}}
                             <div class="animate-fade-in delay-400 flex flex-col sm:flex-row gap-4">
                                 <button class="group inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-semibold text-zinc-950 transition-all hover:scale-[1.02] hover:bg-zinc-200 active:scale-[0.98] cursor-pointer">
-                                    Buat Roadmap Gratis 
+                                    Buat Roadmap Gratis
                                     <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="5" y1="12" x2="19" y2="12"></line>
                                         <polyline points="12 5 19 12 12 19"></polyline>
@@ -218,7 +263,7 @@
                             {{-- Marquee Card --}}
                             <div class="animate-fade-in delay-500 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-8 backdrop-blur-xl">
                                 <h3 class="mb-6 px-8 text-sm font-medium text-zinc-400">Dirancang khusus untuk</h3>
-                                <div class="relative flex overflow-hidden" 
+                                <div class="relative flex overflow-hidden"
                                      style="mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
                                             -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);">
                                     <div class="animate-marquee flex gap-12 whitespace-nowrap px-4">
@@ -374,7 +419,36 @@
                     </div>
                 </div>
             </section>
-
         </main>
+
+        {{-- Footer Section --}}
+        <footer class="border-t border-white/10 bg-zinc-950 py-12 relative overflow-hidden">
+            {{-- Subtle Ambient Glow --}}
+            <div class="absolute bottom-0 right-1/4 h-64 w-64 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+            
+            <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10 text-center md:text-left">
+                {{-- Logo and Copyright --}}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-center md:justify-start gap-3">
+                        <img src="{{ asset('assets/icon-images/buatjalan-icon.png') }}" class="w-7 h-7 rounded-[6px]" alt="BuatJalan Logo">
+                        <span class="text-sm font-bold tracking-tight text-white">BuatJalan</span>
+                    </div>
+                    <p class="text-xs text-zinc-500">
+                        &copy; {{ date('Y') }} BuatJalan. Developed by <strong class="text-zinc-300">Ahlfs</strong>. All rights reserved.
+                    </p>
+                </div>
+
+                {{-- Secure & Premium Badges --}}
+                <div class="flex flex-col items-center md:items-end gap-2">
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Platform Integrity</span>
+                    <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400 font-medium">
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">🔒 Secure Payment</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">⚡ High Performance</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">🤖 AI Orchestrator</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">☁️ Cloud Infrastructure</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </body>
 </html>

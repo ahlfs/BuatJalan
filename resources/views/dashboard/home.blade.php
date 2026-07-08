@@ -4,16 +4,11 @@
 @section('page_title', 'Beranda')
 
 @section('content')
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 font-sans">
         {{-- Top Welcome Bar --}}
-        <div class="flex items-center justify-between mb-2">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Selamat Datang di BuatJalan 👋</h1>
-                <p class="text-sm text-zinc-400 mt-1">Kelola ide aplikasi, tech stack, dan AI roadmap project Anda dalam satu tempat.</p>
-            </div>
-            <a href="/dashboard/new" class="bg-white text-zinc-950 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-zinc-200 transition-colors cursor-pointer flex items-center gap-2">
-                <span>+</span> Buat Project Baru
-            </a>
+        <div class="mb-2">
+            <h1 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Selamat Datang di BuatJalan 👋</h1>
+            <p class="text-sm text-zinc-400 mt-1">Kelola seluruh workspace, proyek aplikasi, dan token AI Anda secara global dalam satu dashboard terpadu.</p>
         </div>
         
         {{-- Stats Grid --}}
@@ -21,24 +16,24 @@
             {{-- Card 1 --}}
             <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
                 <div class="flex items-center justify-between text-zinc-400">
-                    <span class="text-sm font-medium">Roadmap Aktif</span>
-                    <img src="{{ asset('assets/icon-images/cube-icon.png') }}" class="w-5 h-5 shrink-0" alt="Cube Roadmap">
+                    <span class="text-sm font-medium">Workspace Terdaftar</span>
+                    <span class="text-xl">📁</span>
                 </div>
                 <div class="mt-2">
-                    <div class="text-3xl font-bold text-white">{{ count($projects) }} Project</div>
-                    <p class="text-xs text-zinc-500 mt-1">Total proyek yang terdaftar</p>
+                    <div class="text-3xl font-bold text-white">{{ count($workspaces) }} Workspace</div>
+                    <p class="text-xs text-zinc-500 mt-1">Milik Anda & kolaborasi tim</p>
                 </div>
             </div>
 
             {{-- Card 2 --}}
             <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
                 <div class="flex items-center justify-between text-zinc-400">
-                    <span class="text-sm font-medium">Emerald Token</span>
-                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-5 h-5 shrink-0" alt="Emerald Token">
+                    <span class="text-sm font-medium">Total Proyek</span>
+                    <span class="text-xl">🚀</span>
                 </div>
                 <div class="mt-2">
-                    <div class="text-3xl font-bold text-white">18 / 20</div>
-                    <p class="text-xs text-zinc-500 mt-1">Kuota terpakai bulan ini</p>
+                    <div class="text-3xl font-bold text-white">{{ count($projects) }} Project</div>
+                    <p class="text-xs text-zinc-500 mt-1">Di seluruh workspace Anda</p>
                 </div>
             </div>
 
@@ -46,7 +41,7 @@
             <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
                 <div class="flex items-center justify-between text-zinc-400">
                     <span class="text-sm font-medium">PRD Ter-generate</span>
-                    <img src="{{ asset('assets/icon-images/paper-icon.png') }}" class="w-5 h-5 shrink-0" alt="Doc PRD">
+                    <span class="text-xl">📄</span>
                 </div>
                 <div class="mt-2">
                     <div class="text-3xl font-bold text-white">{{ $projects->filter(fn($p) => !empty($p->prd_markdown))->count() }} Dokumen</div>
@@ -59,10 +54,10 @@
         <div class="w-full bg-zinc-900 rounded-xl border border-white/10 shadow-sm p-6">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-lg font-bold text-white">Project Aktif Anda</h2>
-                    <p class="text-xs text-zinc-400 mt-1">Daftar Project yang sedang Anda kembangkan roadmapnya.</p>
+                    <h2 class="text-lg font-bold text-white">Seluruh Project Aktif Anda</h2>
+                    <p class="text-xs text-zinc-400 mt-1">Daftar proyek dari seluruh workspace yang Anda ikuti.</p>
                 </div>
-                <span class="text-xs text-zinc-400">Terakhir diperbarui hari ini</span>
+                <span class="text-xs text-zinc-500">Terakhir diperbarui hari ini</span>
             </div>
             
             <div class="h-px bg-white/10 mb-6"></div>
@@ -79,8 +74,13 @@
                                 @endif
                             </div>
                             <div>
-                                <h3 class="text-sm font-semibold text-white">{{ $project->title }}</h3>
-                                <p class="text-xs text-zinc-500 mt-0.5">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-sm font-semibold text-white">{{ $project->title }}</h3>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">
+                                        {{ $project->workspace->name ?? 'Personal' }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-zinc-500 mt-1">
                                     Tech Stack: 
                                     @if($project->techStacks->count() > 0)
                                         {{ $project->techStacks->pluck('name')->join(' + ') }}
@@ -105,6 +105,50 @@
                         <a href="/dashboard/new" class="text-xs font-semibold text-primary hover:underline">+ Buat Proyek Pertama Anda</a>
                     </div>
                 @endforelse
+            </div>
+        </div>
+
+        {{-- Workspace List Widget --}}
+        <div class="w-full bg-zinc-900 rounded-xl border border-white/10 shadow-sm p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Daftar Workspace Anda</h2>
+                    <p class="text-xs text-zinc-400 mt-1">Beralih antar workspace secara instan untuk mengelola proyek dan token kolaborasi terkait.</p>
+                </div>
+            </div>
+            
+            <div class="h-px bg-white/10 mb-6"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($workspaces as $ws)
+                    <div class="flex items-center justify-between p-4 bg-zinc-950 rounded-lg border {{ auth()->user()->current_workspace_id === $ws->id ? 'border-primary/30 bg-primary/5' : 'border-white/5 hover:border-white/10' }} transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                                {{ strtoupper(substr($ws->name, 0, 1)) }}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-semibold text-white leading-tight flex items-center gap-1.5">
+                                    {{ $ws->name }}
+                                    @if(auth()->user()->current_workspace_id === $ws->id)
+                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Workspace Aktif"></span>
+                                    @endif
+                                </span>
+                                <span class="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald">
+                                    <span>{{ $ws->tokens_balance }} Token • 📁 {{ $ws->projects()->count() }} Proyek</span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <form action="{{ route('workspaces.switch', $ws->id) }}" method="POST" class="m-0">
+                            @csrf
+                            <button type="submit" class="px-3 py-1.5 rounded text-xs transition-colors cursor-pointer select-none
+                                {{ auth()->user()->current_workspace_id === $ws->id ? 'bg-primary/20 text-primary border border-primary/20 font-semibold' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10' }}">
+                                {{ auth()->user()->current_workspace_id === $ws->id ? 'Aktif' : 'Beralih' }}
+                            </button>
+                        </form>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>

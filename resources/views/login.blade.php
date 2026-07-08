@@ -3,8 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow">
         <title>Login - BuatJalan</title>
-        
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -26,12 +27,12 @@
                     <p class="text-zinc-300 mt-4 text-sm leading-relaxed">Masuk ke dashboard untuk generate roadmap dengan AI, rancang PRD, dan pantau progress belajarmu.</p>
                 </div>
             </div>
-        
+
             {{-- Right Side: Login Box --}}
             <div class="w-full lg:w-1/2 flex flex-col items-center justify-center bg-zinc-950 relative p-8">
                 {{-- Glow effect --}}
                 <div class="absolute top-0 right-0 -mr-16 -mt-16 h-96 w-96 rounded-full bg-white/5 blur-3xl pointer-events-none"></div>
-                
+
                 {{-- Back button --}}
                 <a href="/" class="absolute top-8 left-8 inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
@@ -48,7 +49,7 @@
                         <h2 class="text-3xl text-white font-bold tracking-tight">BuatJalan</h2>
                     </div>
                     <p class="text-sm text-zinc-400 mt-3 text-center">Masuk untuk memulai generate roadmap AI Anda</p>
-         
+
                     @if(session('error'))
                         <div class="w-full mt-6 p-4 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-xs text-center">
                             {{ session('error') }}
@@ -67,7 +68,7 @@
                             </svg>
                             Continue with Google
                         </a>
-        
+
                         {{-- GitHub OAuth Button --}}
                         <a href="/auth/github/redirect" class="w-full flex items-center justify-center gap-3 h-12 rounded-full border border-white/10 bg-white/5 text-white text-sm font-semibold transition-all hover:bg-white/10 hover:border-white/20 active:scale-[0.98] cursor-pointer">
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">

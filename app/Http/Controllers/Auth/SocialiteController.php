@@ -51,6 +51,24 @@ class SocialiteController extends Controller
                 return redirect('/login')->with('error', "Failed to retrieve email address from your {$provider} account.");
             }
 
+            // If user is already authenticated, link the provider to this user
+            if (Auth::check()) {
+                $currentUser = Auth::user();
+
+                // Ensure no other user is linked to this social account
+                $existingUser = User::where("{$provider}_id", $socialUser->getId())->first();
+                if ($existingUser && $existingUser->id !== $currentUser->id) {
+                    return redirect('/dashboard')->with('error', "Akun " . ucfirst($provider) . " ini sudah dihubungkan ke akun lain.");
+                }
+
+                $currentUser->update([
+                    "{$provider}_id" => $socialUser->getId(),
+                    'avatar' => $currentUser->avatar ?: $socialUser->getAvatar(),
+                ]);
+
+                return redirect('/dashboard')->with('success', "Akun " . ucfirst($provider) . " berhasil dihubungkan ke profil Anda!");
+            }
+
             // Find existing user by provider ID
             $user = User::where("{$provider}_id", $socialUser->getId())->first();
 

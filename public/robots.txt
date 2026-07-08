@@ -1,2 +1,9 @@
 User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /api/
+
+# Lokasi sitemap jika nanti sudah di-deploy secara online
+Sitemap: https://buatjalan.com/sitemap.xml

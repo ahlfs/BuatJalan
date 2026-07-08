@@ -80,83 +80,78 @@
                 <span class="text-[10px] text-zinc-500 font-medium">Diurutkan berdasarkan terbaru</span>
             </div>
 
-            @if(count($projects) === 0)
+            @php
+                $transactions = auth()->user()->currentWorkspace
+                    ? auth()->user()->currentWorkspace->transactions()->with('user')->latest()->get()
+                    : collect();
+            @endphp
+
+            @if($transactions->count() === 0)
                 {{-- Empty State --}}
                 <div class="border border-dashed border-white/10 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-4 bg-zinc-900/10">
                     <span class="text-4xl">📭</span>
                     <h4 class="text-sm font-bold text-white">Log Aktivitas Kosong</h4>
-                    <p class="text-xs text-zinc-500 max-w-sm">Anda belum menginisiasi ide proyek apa pun. Generate proyek pertama Anda untuk mulai mengisi riwayat aktivitas workspace ini.</p>
+                    <p class="text-xs text-zinc-500 max-w-sm">Anda belum memiliki transaksi koin atau aktivitas generator di workspace ini.</p>
                     <a href="/dashboard/new" class="inline-flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4 py-2 rounded-xl text-xs transition-colors">
                         + Buat Proyek Baru
                     </a>
                 </div>
             @else
-                @php
-                    $activities = [];
-                    foreach($projects as $project) {
-                        // 1. Inception log (Membuat)
-                        $activities[] = [
-                            'timestamp' => $project->created_at,
-                            'user' => auth()->user()->name,
-                            'action' => 'membuat',
-                            'project_title' => $project->title,
-                            'credits' => 10,
-                            'badge' => 'Create',
-                            'color' => 'emerald'
-                        ];
+                <div class="max-h-[520px] overflow-y-auto pr-2 custom-scrollbar">
+                    {{-- Timeline Log Stream --}}
+                    <div class="relative pl-6 space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[11px] before:w-0.5 before:bg-white/10">
                         
-                        // 2. Modification log (Mengubah) - if updated_at is greater than created_at by 5 seconds
-                        if ($project->updated_at && $project->updated_at->diffInSeconds($project->created_at) > 5) {
-                            $activities[] = [
-                                'timestamp' => $project->updated_at,
-                                'user' => auth()->user()->name,
-                                'action' => 'mengubah',
-                                'project_title' => $project->title,
-                                'credits' => 10,
-                                'badge' => 'Edit',
-                                'color' => 'amber'
-                            ];
-                        }
-                    }
-                    
-                    // Sort activities descending
-                    usort($activities, function($a, $b) {
-                        return $b['timestamp']->getTimestamp() - $a['timestamp']->getTimestamp();
-                    });
-                @endphp
+                        @foreach($transactions as $trans)
+                            @php
+                                $color = 'emerald';
+                                $badge = 'Create';
+                                $actionText = 'membuat';
+                                $creditsText = '-' . abs($trans->amount) . ' Kredit';
+                                $creditsColor = 'text-emerald-400';
 
-                {{-- Timeline Log Stream --}}
-                <div class="relative pl-6 space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[11px] before:w-0.5 before:bg-white/10">
-                    
-                    @foreach($activities as $act)
-                        <div class="relative group">
-                            {{-- Timeline Marker --}}
-                            <div class="absolute left-[-21px] top-1.5 w-[12px] h-[12px] rounded-full border-4 border-zinc-950 group-hover:scale-125 transition-transform {{ $act['color'] === 'emerald' ? 'bg-emerald-500' : 'bg-amber-500' }}"></div>
-                            
-                            <div class="bg-zinc-900/30 border border-white/5 hover:border-white/10 p-4 rounded-2xl space-y-1.5 transition-colors">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p class="text-xs text-zinc-300 leading-relaxed">
-                                            <span class="text-white font-semibold">{{ $act['user'] }}</span> 
-                                            {{ $act['action'] }} project 
-                                            <span class="text-white font-semibold">"{{ $act['project_title'] }}"</span>.
-                                        </p>
-                                        <p class="text-[10px] text-zinc-500 mt-1">
-                                            Kredit berkurang: <span class="font-bold {{ $act['color'] === 'emerald' ? 'text-emerald-400' : 'text-amber-400' }}">-{{ $act['credits'] }} Kredit</span>
-                                        </p>
+                                if ($trans->type === 'modification') {
+                                    $color = 'amber';
+                                    $badge = 'Edit';
+                                    $actionText = 'mengubah';
+                                    $creditsColor = 'text-amber-400';
+                                } elseif ($trans->type === 'top_up') {
+                                    $color = 'blue';
+                                    $badge = 'Top Up';
+                                    $actionText = 'melakukan top up untuk';
+                                    $creditsText = '+' . $trans->amount . ' Kredit';
+                                    $creditsColor = 'text-blue-400';
+                                }
+                            @endphp
+                            <div class="relative group">
+                                {{-- Timeline Marker --}}
+                                <div class="absolute left-[-21px] top-1.5 w-[12px] h-[12px] rounded-full border-4 border-zinc-950 group-hover:scale-125 transition-transform 
+                                    @if($color === 'emerald') bg-emerald-500 @elseif($color === 'amber') bg-amber-500 @else bg-blue-500 @endif"></div>
+                                
+                                <div class="bg-zinc-900/30 border border-white/5 hover:border-white/10 p-4 rounded-2xl space-y-1.5 transition-colors">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div>
+                                            <p class="text-xs text-zinc-300 leading-relaxed">
+                                                <span class="text-white font-semibold">{{ $trans->user->name ?? 'User' }}</span> 
+                                                {{ $actionText }} 
+                                                <span class="text-white font-semibold">"{{ $trans->description }}"</span>.
+                                            </p>
+                                            <p class="text-[10px] text-zinc-500 mt-1">
+                                                Mutasi Kredit: <span class="font-bold {{ $creditsColor }}">{{ $creditsText }}</span>
+                                            </p>
+                                        </div>
+                                        <span class="text-[9px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full shrink-0">
+                                            {{ $badge }}
+                                        </span>
                                     </div>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full shrink-0">
-                                        {{ $act['badge'] }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5">
-                                    <span>Workspace: Acme Corp</span>
-                                    <span>{{ $act['timestamp']->diffForHumans() }}</span>
+                                    <div class="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5">
+                                        <span>Workspace: {{ auth()->user()->currentWorkspace->name ?? '' }}</span>
+                                        <span>{{ $trans->created_at->diffForHumans() }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
 
+                    </div>
                 </div>
             @endif
         </div>
@@ -172,12 +167,65 @@
                 <p class="text-[11px] text-zinc-400 leading-relaxed">Persentase distribusi teknologi paling dominan yang direkomendasikan AI untuk proyek-proyek Anda.</p>
                 
                 @php
+                    $knownKeywords = [
+                        'laravel' => 'Laravel',
+                        'react' => 'React',
+                        'next' => 'Next.js',
+                        'astro' => 'Astro',
+                        'node' => 'Node.js',
+                        'express' => 'Express',
+                        'postgres' => 'PostgreSQL',
+                        'mysql' => 'MySQL',
+                        'mongo' => 'MongoDB',
+                        'python' => 'Python',
+                        'go' => 'Go',
+                        'vue' => 'Vue.js',
+                        'flutter' => 'Flutter',
+                        'docker' => 'Docker',
+                        'tailwind' => 'Tailwind CSS',
+                        'kotlin' => 'Kotlin',
+                        'typescript' => 'TypeScript',
+                        'javascript' => 'JavaScript',
+                        'java' => 'Java',
+                        'spring' => 'Spring Boot',
+                        'swift' => 'Swift',
+                        'firebase' => 'Firebase',
+                        'redis' => 'Redis',
+                        'php' => 'PHP',
+                        'ruby' => 'Ruby',
+                        'supabase' => 'Supabase',
+                        'vercel' => 'Vercel',
+                        'railway' => 'Railway',
+                        'aws' => 'AWS',
+                        'stripe' => 'Stripe',
+                        'kubernetes' => 'Kubernetes',
+                        'nginx' => 'Nginx',
+                        'django' => 'Django',
+                        'flask' => 'Flask',
+                        'angular' => 'Angular',
+                        'svelte' => 'Svelte',
+                        'figma' => 'Figma',
+                    ];
+
                     $allTech = [];
                     foreach($projects as $p) {
                         foreach($p->techStacks as $ts) {
-                            $allTech[] = $ts->name;
+                            $nameLower = strtolower($ts->name);
+                            $matched = false;
+                            
+                            foreach ($knownKeywords as $key => $displayName) {
+                                if (str_contains($nameLower, $key)) {
+                                    $allTech[] = $displayName;
+                                    $matched = true;
+                                }
+                            }
+                            
+                            if (!$matched) {
+                                $allTech[] = ucwords($ts->name);
+                            }
                         }
                     }
+                    
                     $techCounts = array_count_values($allTech);
                     arsort($techCounts);
                     $totalTechCount = count($allTech) ?: 1;

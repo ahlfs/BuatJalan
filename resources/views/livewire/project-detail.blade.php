@@ -4,12 +4,34 @@
     editModalOpen: false,
     updatingProject: false,
     updateStep: 0,
+    showInsufficientModal: false,
+    currentTokens: {{ auth()->user()->currentWorkspace->tokens_balance ?? 0 }},
     
     projectTitle: @js($project->title),
     projectDesc: @js($project->description),
     editInfoModalOpen: false,
     
+    openEditModal() {
+        if (this.currentTokens < 10) {
+            this.showInsufficientModal = true;
+        } else {
+            this.editModalOpen = true;
+        }
+    },
+    
+    saveInfo() {
+        let self = this;
+        this.editInfoModalOpen = false;
+        self.projectTitle = self.$wire.editTitleInput;
+        self.projectDesc = self.$wire.editDescInput;
+        this.$wire.saveInfo();
+    },
+    
     startUpdating() {
+        if (this.currentTokens < 10) {
+            this.showInsufficientModal = true;
+            return;
+        }
         this.updatingProject = true;
         this.updateStep = 0;
         let self = this;
@@ -45,9 +67,12 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <button @click="editModalOpen = true" class="border border-white/10 hover:border-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2">
+            <button @click="openEditModal()" class="border border-white/10 hover:border-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path></svg>
-                Ubah Project
+                <span>Ubah Project</span>
+                <span class="px-1.5 py-0.5 rounded bg-white/10 text-emerald-400 text-[10px] font-bold flex items-center gap-1 border border-emerald-500/20">
+                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald"> 10
+                </span>
             </button>
             <button @click="prdModalOpen = true" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors cursor-pointer flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
@@ -365,14 +390,14 @@ Columns:
                             🔗
                         </div>
                         <div class="space-y-1">
-                            <h3 class="text-sm font-bold text-white">Export as Link</h3>
-                            <p class="text-xs text-zinc-400 leading-relaxed">Salin link tautan publik proyek ini untuk dibagikan atau dibaca langsung oleh AI Agent online (seperti ChatGPT atau Claude).</p>
+                            <h3 class="text-sm font-bold text-white">Export as Link (Raw Markdown)</h3>
+                            <p class="text-xs text-zinc-400 leading-relaxed">Salin link tautan konteks mentah (Raw Markdown) proyek ini untuk langsung dibaca atau diunduh oleh AI Agent online (seperti ChatGPT, Claude, atau Cursor).</p>
                         </div>
                     </div>
                     
                     <button 
                         @click="
-                            navigator.clipboard.writeText(window.location.href);
+                            navigator.clipboard.writeText('{{ url('/shared/project/' . $project->slug) }}');
                             let original = $el.innerHTML;
                             $el.innerHTML = '<span class=\'flex items-center gap-1.5\'>✓ Link Berhasil Disalin!</span>';
                             $el.classList.remove('bg-blue-600', 'hover:bg-blue-500');
@@ -386,7 +411,7 @@ Columns:
                         class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                        Salin Tautan Context (Link)
+                        Salin Tautan Context (Raw Link)
                     </button>
                 </div>
 
@@ -512,7 +537,7 @@ Columns:
                     x-model="$wire.editRequest"
                     rows="4"
                     placeholder="Contoh: Ubah database PostgreSQL menjadi MySQL, atau tambahkan fitur login multi-role pada langkah roadmap..."
-                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-all leading-relaxed"
+                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-all leading-relaxed custom-scrollbar resize-none"
                 ></textarea>
             </div>
 
@@ -527,9 +552,12 @@ Columns:
                 <button 
                     @click="startUpdating()"
                     :disabled="!$wire.editRequest || $wire.editRequest.trim().length < 5"
-                    class="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                    Ubah Sekarang
+                    <span>Ubah Sekarang</span>
+                    <span class="px-1.5 py-0.5 rounded bg-black/25 text-white text-[10px] font-bold flex items-center gap-1 border border-black/10 select-none">
+                        <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald"> 10
+                    </span>
                 </button>
             </div>
 
@@ -580,7 +608,7 @@ Columns:
                         x-model="$wire.editDescInput"
                         rows="4"
                         placeholder="Ketik deskripsi ringkas proyek..."
-                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-all leading-relaxed"
+                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-all leading-relaxed custom-scrollbar resize-none"
                     ></textarea>
                 </div>
             </div>
@@ -594,14 +622,7 @@ Columns:
                     Batal
                 </button>
                 <button 
-                    @click="
-                        let self = this;
-                        $wire.saveInfo().then(() => {
-                            self.projectTitle = self.$wire.editTitleInput;
-                            self.projectDesc = self.$wire.editDescInput;
-                            self.editInfoModalOpen = false;
-                        });
-                    "
+                    @click="saveInfo()"
                     :disabled="!$wire.editTitleInput || $wire.editTitleInput.trim().length === 0 || !$wire.editDescInput || $wire.editDescInput.trim().length === 0"
                     class="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -612,4 +633,40 @@ Columns:
         </div>
     </div>
 
+    {{-- INSUFFICIENT TOKENS MODAL --}}
+    <div 
+        x-show="showInsufficientModal" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showInsufficientModal = false"></div>
+        <div class="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 animate-pulse">
+                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-6 h-6 object-contain" alt="Emerald">
+                </div>
+                
+                <h3 class="text-base font-bold text-white mb-2">Saldo Token Tidak Mencukupi</h3>
+                <p class="text-xs text-zinc-400 mb-6 leading-relaxed">
+                    Pengubahan proyek ini membutuhkan <strong class="text-white">10 Token</strong>. Saldo token workspace Anda saat ini hanya <strong class="text-emerald-400">{{ auth()->user()->currentWorkspace->tokens_balance ?? 0 }} Token</strong>.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-3 w-full">
+                    <button 
+                        @click="showInsufficientModal = false"
+                        class="flex-1 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                        Tutup
+                    </button>
+                    <a 
+                        href="/dashboard/pricing"
+                        class="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold text-center cursor-pointer transition-colors flex items-center justify-center gap-1 select-none"
+                    >
+                        <span>Top Up Token</span> 🚀
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

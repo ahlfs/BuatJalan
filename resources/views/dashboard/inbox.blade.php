@@ -4,51 +4,33 @@
 @section('page_title', $title)
 
 @section('content')
+    @php
+        $dbMessages = auth()->user()->inboxes()->orderBy('created_at', 'desc')->get()->map(function($msg) {
+            return [
+                'id' => $msg->id,
+                'type' => $msg->type,
+                'sender' => $msg->sender,
+                'avatar' => $msg->avatar,
+                'avatarBg' => $msg->avatar_bg,
+                'subject' => $msg->subject,
+                'date' => $msg->created_at->diffForHumans(),
+                'unread' => $msg->unread,
+                'content' => $msg->content,
+                'workspace_name' => $msg->workspace ? $msg->workspace->name : null,
+                'invitation_id' => $msg->id,
+                'status' => $msg->invitation_status ?? 'pending'
+            ];
+        });
+    @endphp
+
     <div 
-        x-data="{ 
+        x-data='{ 
             activeMessage: null,
-            searchQuery: '',
-            messages: [
-                {
-                    id: 1,
-                    type: 'system',
-                    sender: 'System Update',
-                    avatar: '⚙️',
-                    avatarBg: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-                    subject: 'Sistem Update: Model Gemini Flash 3 Kini Lebih Cepat ⚡',
-                    date: 'Hari ini',
-                    unread: true,
-                    content: 'Halo Developer & Vibecoder!\n\nKami baru saja merilis pembaruan server pada engine kecerdasan buatan BuatJalan. Kami kini menggunakan model Gemini Flash 3 versi stabil terbaru.\n\nKeuntungan update ini:\n- Waktu generate PRD & Arsitektur Database 2x lebih cepat.\n- Peningkatan kualitas referensi relasi tabel database.\n- Konsumsi koin tetap hemat (10 Kredit per Generate).\n\nSilakan coba membuat project baru dan rasakan peningkatannya. Jika Anda memiliki saran pengembangan, jangan ragu untuk memberikan masukan kepada kami melalui menu Bantuan.\n\nSelamat berkreasi!\nTim Developer BuatJalan'
-                },
-                {
-                    id: 2,
-                    type: 'billing',
-                    sender: 'Billing Platform',
-                    avatar: '💳',
-                    avatarBg: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-                    subject: 'Top Up Kredit Berhasil - Popular Pack Ditambahkan 🌟',
-                    date: 'Kemarin',
-                    unread: true,
-                    content: 'Terima kasih atas pembelian Anda!\n\nPembayaran Anda via Midtrans QRIS telah berhasil diverifikasi oleh sistem kami secara otomatis.\n\nDetail Pembelian:\n- Paket: Popular Pack\n- Jumlah Kredit: +150 Kredit\n- Total Biaya: Rp 49.000 (Lunas)\n- Invoice ID: INV-20260705-1940-A\n- Waktu Transaksi: 05 Juli 2026, 19:40 WIB\n\nSaldo kredit workspace Anda telah berhasil diperbarui. Periksa halaman Pricing untuk melihat detail kuota Anda. Terima kasih telah mendukung keberlangsungan platform ini!'
-                },
-                {
-                    id: 3,
-                    type: 'invitation',
-                    sender: 'Workspace Invitation',
-                    avatar: '🤝',
-                    avatarBg: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
-                    subject: 'Undangan Kolaborasi: Bergabung ke Workspace \'Airlangga Dev\' 🚀',
-                    date: '3 hari yang lalu',
-                    unread: true,
-                    content: 'Ahlul Firdaus (ahlulffirdaus@gmail.com) mengundang Anda untuk berkolaborasi di workspace miliknya: \'Airlangga Dev\'.\n\nKeuntungan Kolaborasi:\n- Akses bersama untuk mengelola proyek aktif.\n- Penggunaan koin kredit workspace terpusat.\n- Berbagi rancangan PRD, skema database, dan roadmap belajar.\n\nSilakan tentukan keputusan Anda dengan menekan tombol Terima atau Tolak di bawah.',
-                    workspace_name: 'Airlangga Dev',
-                    invitation_id: 42,
-                    status: 'pending'
-                }
-            ],
+            searchQuery: "",
+            messages: @json($dbMessages),
             
             get filteredMessages() {
-                if (this.searchQuery.trim() === '') {
+                if (this.searchQuery.trim() === "") {
                     return this.messages;
                 }
                 let query = this.searchQuery.toLowerCase();
@@ -61,22 +43,36 @@
             
             openMessage(msg) {
                 this.activeMessage = msg;
-                msg.unread = false;
+                if (msg.unread) {
+                    msg.unread = false;
+                    fetch("/dashboard/inbox/read/" + msg.id, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                            "Content-Type": "application/json"
+                        }
+                    });
+                }
             },
 
             respondInvitation(msg, response) {
-                msg.status = response;
-                if (response === 'accepted') {
-                    msg.content = 'Anda telah MENERIMA undangan kolaborasi ini.\n\nSelamat! Sekarang Anda resmi menjadi anggota dari Workspace \'Airlangga Dev\'. Anda dapat mengakses seluruh proyek yang terdaftar di bawah workspace ini melalui menu navigasi samping.';
-                    msg.subject = '✓ Undangan Kolaborasi Diterima: Workspace \'Airlangga Dev\'';
-                } else {
-                    msg.content = 'Anda telah MENOLAK undangan kolaborasi ini.\n\nUndangan ini telah diarsipkan dan tidak lagi berlaku.';
-                    msg.subject = '✕ Undangan Kolaborasi Ditolak: Workspace \'Airlangga Dev\'';
-                }
+                let form = document.getElementById("respond-invitation-form");
+                form.action = "/dashboard/inbox/invitation/" + msg.invitation_id + "/respond";
+                
+                let mappedResponse = response === "declined" ? "rejected" : "accepted";
+                document.getElementById("invitation-response-value").value = mappedResponse;
+                
+                form.submit();
             }
-        }"
+        }'
         class="flex flex-col gap-6 font-sans"
     >
+        {{-- Hidden Form for Invitation Response --}}
+        <form id="respond-invitation-form" method="POST" action="" class="hidden">
+            @csrf
+            <input type="hidden" name="response" id="invitation-response-value" value="">
+        </form>
+
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -121,11 +117,18 @@
                         {{-- Left Side: Sender Avatar & Info --}}
                         <div class="flex items-center gap-3.5 min-w-0">
                             {{-- Avatar icon indicator --}}
-                            <div 
-                                class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none"
-                                :class="msg.avatarBg"
-                                x-text="msg.avatar"
-                            ></div>
+                            <div class="shrink-0 select-none">
+                                <template x-if="msg.avatar && (msg.avatar.startsWith('http') || msg.avatar.startsWith('/') || msg.avatar.includes('.') || msg.avatar.startsWith('data:'))">
+                                    <img :src="msg.avatar" class="w-9 h-9 rounded-full object-cover border border-white/10" alt="Avatar">
+                                </template>
+                                <template x-if="!msg.avatar || (!msg.avatar.startsWith('http') && !msg.avatar.startsWith('/') && !msg.avatar.includes('.') && !msg.avatar.startsWith('data:'))">
+                                    <div 
+                                        class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"
+                                        :class="msg.avatarBg"
+                                        x-text="msg.avatar || '🤝'"
+                                    ></div>
+                                </template>
+                            </div>
                             
                             {{-- Subject and Sender --}}
                             <div class="flex flex-col min-w-0">
@@ -169,11 +172,18 @@
                 {{-- Modal Header --}}
                 <div class="flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/50">
                     <div class="flex items-center gap-3">
-                        <div 
-                            class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs select-none shrink-0"
-                            :class="activeMessage ? activeMessage.avatarBg : ''"
-                            x-text="activeMessage ? activeMessage.avatar : ''"
-                        ></div>
+                        <div class="shrink-0 select-none">
+                            <template x-if="activeMessage && activeMessage.avatar && (activeMessage.avatar.startsWith('http') || activeMessage.avatar.startsWith('/') || activeMessage.avatar.includes('.') || activeMessage.avatar.startsWith('data:'))">
+                                <img :src="activeMessage.avatar" class="w-9 h-9 rounded-full object-cover border border-white/10" alt="Avatar">
+                            </template>
+                            <template x-if="activeMessage && (!activeMessage.avatar || (!activeMessage.avatar.startsWith('http') && !activeMessage.avatar.startsWith('/') && !activeMessage.avatar.includes('.') && !activeMessage.avatar.startsWith('data:')))">
+                                <div 
+                                    class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"
+                                    :class="activeMessage.avatarBg"
+                                    x-text="activeMessage.avatar || '🤝'"
+                                ></div>
+                            </template>
+                        </div>
                         <div>
                             <div class="text-xs text-zinc-500">
                                 Dari: <span class="font-semibold text-white" x-text="activeMessage ? activeMessage.sender : ''"></span>

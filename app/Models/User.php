@@ -25,6 +25,7 @@ class User extends Authenticatable
         'google_id',
         'github_id',
         'avatar',
+        'current_workspace_id',
     ];
 
     /**
@@ -56,5 +57,31 @@ class User extends Authenticatable
     public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get the workspaces the user belongs to.
+     */
+    public function workspaces(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Workspace::class, 'workspace_user')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get the current active workspace of the user.
+     */
+    public function currentWorkspace(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Workspace::class, 'current_workspace_id');
+    }
+
+    /**
+     * Get the inboxes of the user.
+     */
+    public function inboxes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Inbox::class);
     }
 }

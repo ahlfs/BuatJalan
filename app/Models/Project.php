@@ -13,6 +13,7 @@ class Project extends Model
 
     protected $fillable = [
         'user_id',
+        'workspace_id',
         'title',
         'slug',
         'description',
@@ -23,6 +24,11 @@ class Project extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     public function techStacks(): HasMany

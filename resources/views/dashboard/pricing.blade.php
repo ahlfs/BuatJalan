@@ -4,7 +4,45 @@
 @section('page_title', 'Token & Pricing')
 
 @section('content')
-<div class="max-w-6xl mx-auto py-4 space-y-10 font-sans">
+<div class="max-w-6xl mx-auto py-4 space-y-10 font-sans" x-data="{
+    showQrisModal: false,
+    selectedPackage: '',
+    selectedPrice: '',
+    selectedCredits: '',
+    step: 'loading', // 'loading' -> 'qris' -> 'verifying' -> 'success'
+    currentForm: null,
+    
+    startPurchase(packageKey, price, credits, formElement) {
+        this.selectedPackage = packageKey;
+        this.selectedPrice = price;
+        this.selectedCredits = credits;
+        this.currentForm = formElement;
+        this.showQrisModal = true;
+        this.step = 'loading';
+        
+        // Step 1: Loading/Creating Invoice (1 sec)
+        setTimeout(() => {
+            this.step = 'qris';
+            
+            // Step 2: Show QRIS and simulate user scanning & paying (3.5 secs)
+            setTimeout(() => {
+                this.step = 'verifying';
+                
+                // Step 3: Verifying payment (1.5 secs)
+                setTimeout(() => {
+                    this.step = 'success';
+                    
+                    // Step 4: Submit to backend to record tokens (1.2 secs)
+                    setTimeout(() => {
+                        this.currentForm.submit();
+                    }, 1200);
+                }, 1500);
+            }, 3500);
+        }, 1000);
+    }
+}">
+
+
     
     {{-- Header Intro --}}
     <div class="text-center max-w-2xl mx-auto space-y-3">
@@ -71,9 +109,13 @@
                 </ul>
             </div>
             
-            <button class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
-                Beli Starter
-            </button>
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('starter', 'Rp 19.000', 50, $el)">
+                @csrf
+                <input type="hidden" name="package" value="starter">
+                <button type="submit" class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
+                    Beli Starter
+                </button>
+            </form>
         </div>
 
         {{-- CARD 2: POPULAR (RECOMMENDED) --}}
@@ -125,9 +167,13 @@
                 </ul>
             </div>
             
-            <button class="w-full mt-8 bg-primary text-primary-foreground hover:bg-primary/95 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer shadow-lg shadow-primary/20">
-                Beli Terpopuler
-            </button>
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('popular', 'Rp 49.000', 150, $el)">
+                @csrf
+                <input type="hidden" name="package" value="popular">
+                <button type="submit" class="w-full mt-8 bg-primary text-primary-foreground hover:bg-primary/95 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer shadow-lg shadow-primary/20">
+                    Beli Terpopuler
+                </button>
+            </form>
         </div>
 
         {{-- CARD 3: DEVELOPER --}}
@@ -176,9 +222,13 @@
                 </ul>
             </div>
             
-            <button class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
-                Beli Developer
-            </button>
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('developer', 'Rp 99.000', 500, $el)">
+                @csrf
+                <input type="hidden" name="package" value="developer">
+                <button type="submit" class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
+                    Beli Developer
+                </button>
+            </form>
         </div>
 
     </div>
@@ -193,6 +243,110 @@
         </div>
         <div class="flex items-center gap-3 shrink-0">
             <span class="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase">Powered by Midtrans</span>
+        </div>
+    </div>
+
+    {{-- QRIS CHECKOUT MODAL --}}
+    <div 
+        x-show="showQrisModal" 
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showQrisModal = false"></div>
+        <div class="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-[340px] overflow-hidden shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
+            
+            {{-- Loading State --}}
+            <div x-show="step === 'loading'" class="p-8 text-center space-y-6 flex flex-col items-center">
+                <svg class="animate-spin h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div class="space-y-2">
+                    <h3 class="text-sm font-bold text-white">Menyiapkan Metode QRIS</h3>
+                    <p class="text-xs text-zinc-400">Menghubungkan ke secure payment gateway...</p>
+                </div>
+            </div>
+
+            {{-- Main QRIS Interface (Shown during 'qris', 'verifying', 'success') --}}
+            <div x-show="step !== 'loading'" class="flex flex-col">
+                {{-- Header --}}
+                <div class="p-5 border-b border-white/5 bg-zinc-900/50 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-xs font-bold text-white">Pembayaran QRIS</h3>
+                        <p class="text-[9px] text-zinc-400 mt-0.5" x-text="'Paket: ' + selectedPackage.toUpperCase() + ' (' + selectedCredits + ' Kredit)'"></p>
+                    </div>
+                    <span class="text-xs font-mono font-black text-white" x-text="selectedPrice"></span>
+                </div>
+                
+                {{-- Body --}}
+                <div class="p-6 flex flex-col items-center justify-center space-y-5">
+                    {{-- QR Code Container with checkmark overlay --}}
+                    <div class="relative bg-white rounded-2xl shadow-xl overflow-hidden w-full flex items-center justify-center">
+                        <img src="{{ asset('assets/background-images/qris-test.png') }}" 
+                             class="w-full h-auto transition-all duration-500"
+                             :class="step === 'verifying' || step === 'success' ? 'opacity-20 blur-[1px]' : ''"
+                             alt="QRIS Code">
+                        
+                        {{-- Bouncing Checkmark Overlay --}}
+                        <div x-show="step === 'verifying' || step === 'success'" 
+                             class="absolute inset-0 flex flex-col items-center justify-center bg-emerald-500/5 backdrop-blur-[1px] animate-in fade-in zoom-in duration-300"
+                             style="display: none;">
+                            <div class="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[bounce_0.5s_ease-out]">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <span class="text-sm text-emerald-600 font-bold mt-3 uppercase tracking-wider">Lunas</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center space-y-2 w-full">
+                        {{-- Status Indicators --}}
+                        <div x-show="step === 'qris'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse">
+                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                            Menunggu Pembayaran...
+                        </div>
+
+                        {{-- Download QRIS Button (only shown during 'qris' step) --}}
+                        <div x-show="step === 'qris'" class="pt-1 px-4">
+                            <a href="{{ asset('assets/background-images/qris-test.png') }}" 
+                               download="BuatJalan-QRIS.png"
+                               class="inline-flex items-center justify-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 px-4 rounded-xl text-[11px] transition-colors cursor-pointer border border-white/5 select-none w-full"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span>Unduh Kode QRIS</span>
+                            </a>
+                        </div>
+                        
+                        <div x-show="step === 'verifying'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-400 animate-pulse" style="display: none;">
+                            <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                            Memverifikasi Transaksi...
+                        </div>
+
+                        <div x-show="step === 'success'" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" style="display: none;">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                            Pembayaran Berhasil!
+                        </div>
+
+                        <p class="text-[10px] text-zinc-500 leading-relaxed max-w-xs mx-auto" x-show="step === 'qris'">
+                            Pindai kode QRIS di atas untuk menyelesaikan pembelian.
+                        </p>
+                        
+                        <p class="text-[10px] text-zinc-500 leading-relaxed max-w-xs mx-auto" x-show="step === 'verifying'" style="display: none;">
+                            Mendapatkan data pelunasan dari server merchant...
+                        </p>
+
+                        <p class="text-[10px] text-emerald-400/80 font-medium leading-relaxed max-w-xs mx-auto" x-show="step === 'success'" style="display: none;" x-text="'+' + selectedCredits + ' Kredit sedang ditambahkan ke workspace Anda...'">
+                        </p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

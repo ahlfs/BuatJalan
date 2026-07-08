@@ -14,17 +14,69 @@
     generating: @entangle('generating'),
     genStep: @entangle('genStep'),
     
+    showInsufficientModal: false,
+    currentTokens: {{ auth()->user()->currentWorkspace->tokens_balance ?? 0 }},
+    
     secondsRemaining: 30,
     timerInterval: null,
     
     get answeredCount() {
         let count = 0;
-        if (this.q1 && this.q1.trim().length > 0) count++;
-        if (this.q2 && this.q2.length > 0) count++;
-        if (this.q3 && this.q3.length > 0) count++;
-        if (this.q4 && this.q4.length > 0) count++;
-        if (this.q5 && this.q5.length > 0) count++;
+        if (this.q1 && this.q1.trim().length !== 0) count++;
+        if (this.q2 && this.q2.length !== 0) count++;
+        if (this.q3 && this.q3.length !== 0) count++;
+        if (this.q4 && this.q4.length !== 0) count++;
+        if (this.q5 && this.q5.length !== 0) count++;
         return count;
+    },
+    
+    q2Custom: [],
+    q3Custom: [],
+    q4Custom: [],
+    q5Custom: [],
+    
+    frontendCustom: [],
+    backendCustom: [],
+    databaseCustom: [],
+    deploymentCustom: [],
+    
+    customModalOpen: false,
+    customModalTarget: '',
+    customModalValue: '',
+    
+    addCustomTag(target) {
+        this.customModalTarget = target;
+        this.customModalValue = '';
+        this.customModalOpen = true;
+        setTimeout(function() {
+            let el = document.getElementById('custom-tag-input');
+            if (el) el.focus();
+        }, 100);
+    },
+    
+    submitCustomTag() {
+        if (this.customModalValue && this.customModalValue.trim().length !== 0) {
+            let cleanVal = this.customModalValue.trim();
+            let target = this.customModalTarget;
+            let arrName = target + 'Custom';
+            if (!this[arrName].includes(cleanVal)) {
+                this[arrName].push(cleanVal);
+            }
+            if (target === 'frontend' || target === 'backend' || target === 'database' || target === 'deployment') {
+                this[target] = cleanVal;
+            } else {
+                this[target] = [cleanVal];
+            }
+            this.customModalOpen = false;
+        }
+    },
+    
+    cancelCustomTag() {
+        let target = this.customModalTarget;
+        if (target === 'frontend' || target === 'backend' || target === 'database' || target === 'deployment') {
+            this[target] = '';
+        }
+        this.customModalOpen = false;
     },
     
     toggleTag(target, tag) {
@@ -32,30 +84,42 @@
             this[target] = [];
         }
         if (this[target].includes(tag)) {
-            this[target] = this[target].filter(t => t !== tag);
+            this[target] = [];
         } else {
-            this[target].push(tag);
+            this[target] = [tag];
+        }
+    },
+    
+    skipQuestion(target) {
+        if (target === 'q1') {
+            this.q1 = '';
+        } else {
+            this[target] = [];
         }
     },
     
     startGeneration() {
+        if (Math.sign(this.currentTokens - 10) === -1) {
+            this.showInsufficientModal = true;
+            return;
+        }
         this.generating = true;
         this.genStep = 0;
         this.secondsRemaining = 30;
         
-        let self = this;
-        this.timerInterval = setInterval(() => {
-            if (self.secondsRemaining > 1) {
+        var self = this;
+        this.timerInterval = setInterval(function() {
+            if (self.secondsRemaining !== 1) {
                 self.secondsRemaining--;
             }
         }, 1000);
         
-        setTimeout(() => { self.genStep = 1; }, 800);
-        setTimeout(() => { self.genStep = 2; }, 1600);
-        setTimeout(() => { self.genStep = 3; }, 2400);
-        setTimeout(() => { self.genStep = 4; }, 3200);
-        setTimeout(() => {
-            self.$wire.generateProjectBackend().then((result) => {
+        setTimeout(function() { self.genStep = 1; }, 800);
+        setTimeout(function() { self.genStep = 2; }, 1600);
+        setTimeout(function() { self.genStep = 3; }, 2400);
+        setTimeout(function() { self.genStep = 4; }, 3200);
+        setTimeout(function() {
+            self.$wire.generateProjectBackend().then(function(result) {
                 clearInterval(self.timerInterval);
                 if (result && result.success && result.slug) {
                     window.location.href = '/dashboard/projects/' + result.slug;
@@ -93,32 +157,32 @@
             {{-- Status Steps --}}
             <div class="w-full space-y-4 text-left border border-white/5 bg-zinc-900/40 backdrop-blur rounded-xl p-5">
                 <div class="flex items-center gap-3">
-                    <span class="text-xs transition-colors" :class="genStep >= 1 ? 'text-primary' : 'text-zinc-500'">
-                        <span x-show="genStep >= 1">✓</span>
-                        <span x-show="genStep < 1" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700 animate-pulse"></span>
+                    <span class="text-xs transition-colors" :class="genStep !== 0 ? 'text-primary' : 'text-zinc-500'">
+                        <span x-show="genStep !== 0">✓</span>
+                        <span x-show="genStep === 0" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700 animate-pulse"></span>
                     </span>
-                    <span class="text-sm font-medium transition-colors" :class="genStep >= 1 ? 'text-white' : 'text-zinc-500'">Menganalisis ide aplikasi</span>
+                    <span class="text-sm font-medium transition-colors" :class="genStep !== 0 ? 'text-white' : 'text-zinc-500'">Menganalisis ide aplikasi</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="text-xs transition-colors" :class="genStep >= 2 ? 'text-primary' : 'text-zinc-500'">
-                        <span x-show="genStep >= 2">✓</span>
-                        <span x-show="genStep < 2" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 1 ? 'animate-pulse bg-primary' : ''"></span>
+                    <span class="text-xs transition-colors" :class="(genStep === 2 || genStep === 3 || genStep === 4) ? 'text-primary' : 'text-zinc-500'">
+                        <span x-show="genStep === 2 || genStep === 3 || genStep === 4">✓</span>
+                        <span x-show="genStep === 0 || genStep === 1" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 1 ? 'animate-pulse bg-primary' : ''"></span>
                     </span>
-                    <span class="text-sm font-medium transition-colors" :class="genStep >= 2 ? 'text-white' : 'text-zinc-500'">Merumuskan target & fitur PRD</span>
+                    <span class="text-sm font-medium transition-colors" :class="(genStep === 2 || genStep === 3 || genStep === 4) ? 'text-white' : 'text-zinc-500'">Merumuskan target & fitur PRD</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="text-xs transition-colors" :class="genStep >= 3 ? 'text-primary' : 'text-zinc-500'">
-                        <span x-show="genStep >= 3">✓</span>
-                        <span x-show="genStep < 3" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 2 ? 'animate-pulse bg-primary' : ''"></span>
+                    <span class="text-xs transition-colors" :class="(genStep === 3 || genStep === 4) ? 'text-primary' : 'text-zinc-500'">
+                        <span x-show="genStep === 3 || genStep === 4">✓</span>
+                        <span x-show="genStep === 0 || genStep === 1 || genStep === 2" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 2 ? 'animate-pulse bg-primary' : ''"></span>
                     </span>
-                    <span class="text-sm font-medium transition-colors" :class="genStep >= 3 ? 'text-white' : 'text-zinc-500'">Memetakan tech stack & arsitektur</span>
+                    <span class="text-sm font-medium transition-colors" :class="(genStep === 3 || genStep === 4) ? 'text-white' : 'text-zinc-500'">Memetakan tech stack & arsitektur</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="text-xs transition-colors" :class="genStep >= 4 ? 'text-primary' : 'text-zinc-500'">
-                        <span x-show="genStep >= 4">✓</span>
-                        <span x-show="genStep < 4" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 3 ? 'animate-pulse bg-primary' : ''"></span>
+                    <span class="text-xs transition-colors" :class="genStep === 4 ? 'text-primary' : 'text-zinc-500'">
+                        <span x-show="genStep === 4">✓</span>
+                        <span x-show="genStep === 0 || genStep === 1 || genStep === 2 || genStep === 3" class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-700" :class="genStep === 3 ? 'animate-pulse bg-primary' : ''"></span>
                     </span>
-                    <span class="text-sm font-medium transition-colors" :class="genStep >= 4 ? 'text-white' : 'text-zinc-500'">Menyiapkan repositori & roadmap belajar</span>
+                    <span class="text-sm font-medium transition-colors" :class="genStep === 4 ? 'text-white' : 'text-zinc-500'">Menyiapkan repositori & roadmap belajar</span>
                 </div>
             </div>
         </div>
@@ -137,9 +201,9 @@
             
             {{-- Horizontal capsules indicator --}}
             <div class="flex items-center gap-1.5">
-                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="step >= 1 ? 'bg-primary' : 'bg-zinc-700'"></span>
-                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="step >= 2 ? 'bg-primary' : 'bg-zinc-700'"></span>
-                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="step >= 3 ? 'bg-primary' : 'bg-zinc-700'"></span>
+                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="step !== 0 ? 'bg-primary' : 'bg-zinc-700'"></span>
+                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="(step === 2 || step === 3) ? 'bg-primary' : 'bg-zinc-700'"></span>
+                <span class="w-8 h-1.5 rounded-full transition-all duration-300" :class="step === 3 ? 'bg-primary' : 'bg-zinc-700'"></span>
             </div>
         </div>
 
@@ -162,7 +226,7 @@
             <div class="flex justify-end pt-4">
                 <button 
                     @click="step = 2"
-                    :disabled="!description || description.trim().length < 10"
+                    :disabled="!description || Math.sign(description.trim().length - 10) === -1"
                     class="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] cursor-pointer"
                 >
                     Lanjut
@@ -224,13 +288,17 @@
                                 <span class="text-[10px] text-zinc-500">UI & tampilan user</span>
                             </div>
                         </div>
-                        <select x-model="frontend" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
+                        <select x-model="frontend" @change="if ($event.target.value === 'custom') { addCustomTag('frontend') }" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
                             <option value="">Pilih framework...</option>
                             <option value="React.js">React.js</option>
                             <option value="Vue.js">Vue.js</option>
                             <option value="Svelte">Svelte</option>
                             <option value="Next.js">Next.js</option>
                             <option value="Astro">Astro</option>
+                            <template x-for="opt in frontendCustom">
+                                <option :value="opt" x-text="opt"></option>
+                            </template>
+                            <option value="custom" class="text-primary font-semibold">+ Lainnya...</option>
                         </select>
                     </div>
 
@@ -243,13 +311,17 @@
                                 <span class="text-[10px] text-zinc-500">Logic & API server</span>
                             </div>
                         </div>
-                        <select x-model="backend" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
+                        <select x-model="backend" @change="if ($event.target.value === 'custom') { addCustomTag('backend') }" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
                             <option value="">Pilih backend...</option>
                             <option value="Laravel">Laravel</option>
                             <option value="Node.js">Node.js (Express)</option>
                             <option value="Go">Go (Golang)</option>
                             <option value="Django">Django (Python)</option>
                             <option value="FastAPI">FastAPI</option>
+                            <template x-for="opt in backendCustom">
+                                <option :value="opt" x-text="opt"></option>
+                            </template>
+                            <option value="custom" class="text-primary font-semibold">+ Lainnya...</option>
                         </select>
                     </div>
 
@@ -262,13 +334,17 @@
                                 <span class="text-[10px] text-zinc-500">Penyimpanan data</span>
                             </div>
                         </div>
-                        <select x-model="database" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
+                        <select x-model="database" @change="if ($event.target.value === 'custom') { addCustomTag('database') }" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
                             <option value="">Pilih database...</option>
                             <option value="PostgreSQL">PostgreSQL</option>
                             <option value="MySQL">MySQL</option>
                             <option value="SQLite">SQLite</option>
                             <option value="MongoDB">MongoDB</option>
                             <option value="Redis">Redis</option>
+                            <template x-for="opt in databaseCustom">
+                                <option :value="opt" x-text="opt"></option>
+                            </template>
+                            <option value="custom" class="text-primary font-semibold">+ Lainnya...</option>
                         </select>
                     </div>
 
@@ -281,13 +357,17 @@
                                 <span class="text-[10px] text-zinc-500">Hosting & infra</span>
                             </div>
                         </div>
-                        <select x-model="deployment" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
+                        <select x-model="deployment" @change="if ($event.target.value === 'custom') { addCustomTag('deployment') }" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary">
                             <option value="">Pilih platform...</option>
                             <option value="Vercel">Vercel</option>
                             <option value="Railway">Railway</option>
                             <option value="Heroku">Heroku</option>
                             <option value="AWS">AWS</option>
                             <option value="DigitalOcean">DigitalOcean</option>
+                            <template x-for="opt in deploymentCustom">
+                                <option :value="opt" x-text="opt"></option>
+                            </template>
+                            <option value="custom" class="text-primary font-semibold">+ Lainnya...</option>
                         </select>
                     </div>
                 </div>
@@ -325,7 +405,7 @@
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-medium text-white">1. Ceritakan seseorang yang butuh aplikasi ini. Sekarang mereka ngapain buat ngatasi masalahnya?</label>
-                        <button @click="q1 = ''" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
+                        <button type="button" @click="skipQuestion('q1')" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
                     </div>
                     <textarea 
                         x-model="q1"
@@ -339,10 +419,10 @@
                 <div class="space-y-3 pt-6">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-medium text-white">2. Seberapa besar skala aplikasi ini</label>
-                        <button @click="q2 = []" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
+                        <button type="button" @click="skipQuestion('q2')" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <template x-for="tag in ['Skala Kecil (MVP / Portofolio)', 'Skala Menengah (SaaS Bisnis)', 'Skala Besar (Enterprise)', 'Eksperimen / Just for Fun']">
+                        <template x-for="tag in ['Skala Kecil (MVP / Portofolio)', 'Skala Menengah (SaaS Bisnis)', 'Skala Besar (Enterprise)', 'Eksperimen / Just for Fun'].concat(q2Custom)">
                             <button 
                                 @click="toggleTag('q2', tag)"
                                 type="button"
@@ -351,7 +431,7 @@
                                 x-text="tag"
                             ></button>
                         </template>
-                        <button type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
+                        <button @click="addCustomTag('q2')" type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
                     </div>
                 </div>
 
@@ -359,10 +439,10 @@
                 <div class="space-y-3 pt-6">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-medium text-white">3. Biaya yang siap anda keluarkan</label>
-                        <button @click="q3 = []" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
+                        <button type="button" @click="skipQuestion('q3')" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <template x-for="tag in ['Hanya Free Tier (Rp 0)', 'Budget Hemat (< Rp 200rb/bln)', 'Budget Menengah (Rp 200rb - 1jt/bln)', 'Budget Enterprise (> Rp 1jt/bln)']">
+                        <template x-for="tag in ['Hanya Free Tier (Rp 0)', 'Budget Hemat (< Rp 200rb/bln)', 'Budget Menengah (Rp 200rb - 1jt/bln)', 'Budget Enterprise (> Rp 1jt/bln)'].concat(q3Custom)">
                             <button 
                                 @click="toggleTag('q3', tag)"
                                 type="button"
@@ -371,7 +451,7 @@
                                 x-text="tag"
                             ></button>
                         </template>
-                        <button type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
+                        <button @click="addCustomTag('q3')" type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
                     </div>
                 </div>
 
@@ -379,10 +459,10 @@
                 <div class="space-y-3 pt-6">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-medium text-white">4. Siapa target pengguna utama aplikasi ini</label>
-                        <button @click="q4 = []" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
+                        <button type="button" @click="skipQuestion('q4')" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <template x-for="tag in ['UMKM / Toko Lokal', 'Developer / Tim Teknis', 'Karyawan Internal Kantor', 'Publik / Umum']">
+                        <template x-for="tag in ['UMKM / Toko Lokal', 'Developer / Tim Teknis', 'Karyawan Internal Kantor', 'Publik / Umum'].concat(q4Custom)">
                             <button 
                                 @click="toggleTag('q4', tag)"
                                 type="button"
@@ -391,7 +471,7 @@
                                 x-text="tag"
                             ></button>
                         </template>
-                        <button type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
+                        <button @click="addCustomTag('q4')" type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
                     </div>
                 </div>
 
@@ -399,10 +479,10 @@
                 <div class="space-y-3 pt-6">
                     <div class="flex justify-between items-center">
                         <label class="text-sm font-medium text-white">5. Bagaimana tingkat pemahaman coding Anda</label>
-                        <button @click="q5 = []" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
+                        <button type="button" @click="skipQuestion('q5')" class="text-xs text-zinc-500 hover:text-white transition-colors cursor-pointer">Lewati</button>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <template x-for="tag in ['Vibecoder (Tanpa ngoding)', 'Pemula (Bisa copy-paste)', 'Menengah (Mengerti logika)', 'Profesional (Terbiasa deploy)']">
+                        <template x-for="tag in ['Vibecoder (Tanpa ngoding)', 'Pemula (Bisa copy-paste)', 'Menengah (Mengerti logika)', 'Profesional (Terbiasa deploy)'].concat(q5Custom)">
                             <button 
                                 @click="toggleTag('q5', tag)"
                                 type="button"
@@ -411,7 +491,7 @@
                                 x-text="tag"
                             ></button>
                         </template>
-                        <button type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
+                        <button @click="addCustomTag('q5')" type="button" class="px-3.5 py-1.5 rounded-full border border-white/10 border-dashed bg-transparent text-zinc-500 text-xs font-medium cursor-pointer">+ Lainnya</button>
                     </div>
                 </div>
             </div>
@@ -426,10 +506,96 @@
                 </button>
                 <button 
                     @click="startGeneration()"
-                    class="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all active:scale-[0.98] cursor-pointer"
+                    class="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1.5"
                 >
-                    Generate PRD
+                    <span>Generate PRD</span>
+                    <span class="px-1.5 py-0.5 rounded bg-black/25 text-white text-[10px] font-bold flex items-center gap-1 border border-black/10 select-none">
+                        <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald"> 10
+                    </span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- INSUFFICIENT TOKENS MODAL --}}
+    <div 
+        x-show="showInsufficientModal" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showInsufficientModal = false"></div>
+        <div class="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 animate-pulse">
+                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-6 h-6 object-contain" alt="Emerald">
+                </div>
+                
+                <h3 class="text-base font-bold text-white mb-2">Saldo Token Tidak Mencukupi</h3>
+                <p class="text-xs text-zinc-400 mb-6 leading-relaxed">
+                    Pembuatan proyek baru membutuhkan <strong class="text-white">10 Token</strong>. Saldo token workspace Anda saat ini hanya <strong class="text-emerald-400">{{ auth()->user()->currentWorkspace->tokens_balance ?? 0 }} Token</strong>.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-3 w-full">
+                    <button 
+                        @click="showInsufficientModal = false"
+                        class="flex-1 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                        Tutup
+                    </button>
+                    <a 
+                        href="/dashboard/pricing"
+                        class="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold text-center cursor-pointer transition-colors flex items-center justify-center gap-1 select-none"
+                    >
+                        <span>Top Up Token</span> 🚀
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- CUSTOM OPTION INPUT MODAL --}}
+    <div 
+        x-show="customModalOpen" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="cancelCustomTag()"></div>
+        <div class="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                    <span class="text-xl">➕</span>
+                    <h3 class="text-base font-bold text-white">Tambah Opsi Kustom</h3>
+                </div>
+                
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Nama Opsi</label>
+                    <input 
+                        type="text" 
+                        x-model="customModalValue"
+                        @keydown.enter="submitCustomTag()"
+                        placeholder="Ketik pilihan baru..."
+                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
+                        id="custom-tag-input"
+                    />
+                </div>
+                
+                <div class="flex gap-3 pt-2">
+                    <button 
+                        @click="cancelCustomTag()"
+                        class="flex-1 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        @click="submitCustomTag()"
+                        :disabled="!customModalValue || customModalValue.trim().length === 0"
+                        class="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Tambah
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -12,6 +12,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Services\AIService;
 
 class CreateProject extends Component
 {
@@ -44,19 +45,19 @@ class CreateProject extends Component
      */
     public function generateProjectBackend()
     {
-        @set_time_limit(180);
-        $provider = config('services.ai.provider', 'iyh');
-        $providerConfig = config("services.ai.providers.{$provider}");
-        
-        if (empty($providerConfig) || empty($providerConfig['key'])) {
-            Log::error("API key is not configured for provider: {$provider} in .env file.");
-            return [
-                'error' => "API Key untuk provider '" . strtoupper($provider) . "' belum diisi di berkas .env Anda."
-            ];
+        $user = auth()->user();
+        $workspace = $user->currentWorkspace;
+
+        if (!$workspace) {
+            return ['error' => 'Silakan pilih atau buat workspace terlebih dahulu.'];
         }
 
-        $apiKey = $providerConfig['key'];
-        $model = $providerConfig['model'];
+        if ($workspace->tokens_balance < 10) {
+            return ['error' => 'Saldo koin Anda tidak mencukupi untuk membuat proyek baru (Dibutuhkan 10 Kredit).'];
+        }
+
+        @set_time_limit(180);
+        // API key loading and configurations are handled within AIService
 
         // 1. Prepare tech preference text
         $techPreference = "";
@@ -153,113 +154,30 @@ JSON Structure:
 }";
 
         // 4. API Request
-        $rawJson = '';
         try {
-            if ($provider === 'gemini') {
-                $response = Http::timeout(120)->post(
-                    "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey,
-                    [
-                        'contents' => [
-                            [
-                                'parts' => [
-                                    ['text' => $prompt]
-                                ]
-                            ]
-                        ],
-                        'generationConfig' => [
-                            'responseMimeType' => 'application/json'
-                        ]
-                    ]
-                );
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                } else {
-                    Log::error('Gemini API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } elseif (in_array($provider, ['openai', 'xai', 'deepseek', 'openrouter', 'iyh'])) {
-                $endpoints = [
-                    'openai' => 'https://api.openai.com/v1/chat/completions',
-                    'xai' => 'https://api.x.ai/v1/chat/completions',
-                    'deepseek' => 'https://api.deepseek.com/chat/completions',
-                    'openrouter' => 'https://openrouter.ai/api/v1/chat/completions',
-                    'iyh' => 'https://api.iyh.app/v1/chat/completions',
-                ];
-
-                $request = Http::timeout(120)->withToken($apiKey);
-                
-                if ($provider === 'openrouter') {
-                    $request->withHeaders([
-                        'HTTP-Referer' => config('app.url', 'http://localhost:8000'),
-                        'X-Title' => config('app.name', 'BuatJalan'),
-                    ]);
-                }
-
-                $response = $request->post($endpoints[$provider], [
-                    'model' => $model,
-                    'messages' => [
-                        ['role' => 'user', 'content' => $prompt]
-                    ],
-                    'response_format' => ['type' => 'json_object']
-                ]);
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['choices'][0]['message']['content'] ?? '';
-                } else {
-                    Log::error(strtoupper($provider) . ' API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } elseif ($provider === 'anthropic') {
-                $response = Http::timeout(120)
-                    ->withHeaders([
-                        'x-api-key' => $apiKey,
-                        'anthropic-version' => '2023-06-01',
-                        'content-type' => 'application/json',
-                    ])
-                    ->post('https://api.anthropic.com/v1/messages', [
-                        'model' => $model,
-                        'max_tokens' => 4000,
-                        'messages' => [
-                            ['role' => 'user', 'content' => $prompt]
-                        ]
-                    ]);
-
-                if ($response->successful()) {
-                    $body = $response->json();
-                    $rawJson = $body['content'][0]['text'] ?? '';
-                } else {
-                    Log::error('Anthropic API call failed: ' . $response->body());
-                    return ['error' => 'API request failed: ' . $response->reason()];
-                }
-            } else {
-                return ['error' => "Provider AI '" . strtoupper($provider) . "' tidak didukung."];
+            $aiResult = AIService::call($prompt);
+            if (isset($aiResult['error'])) {
+                return ['error' => $aiResult['error']];
             }
+            $data = $aiResult['data'];
 
-            // Clean up code block ticks if AI accidentally wraps it
-            $rawJson = trim($rawJson);
-            if (Str::startsWith($rawJson, '```json')) {
-                $rawJson = Str::after($rawJson, '```json');
-            }
-            if (Str::endsWith($rawJson, '```')) {
-                $rawJson = Str::beforeLast($rawJson, '```');
-            }
-            $rawJson = trim($rawJson);
-
-            $data = json_decode($rawJson, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE || empty($data['title'])) {
-                Log::error("Failed to parse JSON response from {$provider}. Raw response: " . $rawJson);
-                return ['error' => 'Gagal melakukan parsing JSON dari model AI. Silakan coba lagi.'];
-            }
+            // Deduct tokens and log transaction
+            $workspace->decrement('tokens_balance', 10);
+            
+            \App\Models\WorkspaceTransaction::create([
+                'workspace_id' => $workspace->id,
+                'user_id' => $user->id,
+                'type' => 'generation',
+                'amount' => -10,
+                'description' => "Membuat Proyek Baru: {$data['title']} (-10 Kredit)",
+            ]);
 
             // 5. Save to database under current user
             $slug = Str::slug($data['title']) . '-' . Str::random(4);
             
             $project = Project::create([
                 'user_id' => auth()->id(),
+                'workspace_id' => $workspace->id,
                 'title' => $data['title'],
                 'slug' => $slug,
                 'description' => $data['description'],
