@@ -92,7 +92,7 @@ class WorkspaceController extends Controller
             'user_id' => $user->id,
             'type' => 'top_up',
             'amount' => $selected['credits'],
-            'description' => "Top Up: {$selected['name']} (+{$selected['credits']} Kredit)",
+            'description' => "Top Up: {$selected['name']} (+{$selected['credits']} Token)",
         ]);
 
         // 3. Create inbox notification message
@@ -102,12 +102,12 @@ class WorkspaceController extends Controller
             'sender' => 'Billing Platform',
             'avatar' => '💳',
             'avatar_bg' => 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-            'subject' => "Top Up Kredit Berhasil - {$selected['name']} Ditambahkan 🌟",
-            'content' => "Terima kasih atas pembelian Anda!\n\nPembayaran Anda via Midtrans QRIS telah berhasil diverifikasi oleh sistem kami secara otomatis.\n\nDetail Pembelian:\n- Paket: {$selected['name']}\n- Jumlah Kredit: +{$selected['credits']} Kredit\n- Total Biaya: {$selected['price']} (Lunas)\n- Invoice ID: INV-" . now()->format('YmdHis') . "-A\n- Waktu Transaksi: " . now()->format('d M Y, H:i') . " WIB\n\nSaldo kredit workspace '{$workspace->name}' Anda telah berhasil diperbarui. Periksa halaman Pricing untuk melihat detail kuota Anda. Terima kasih telah mendukung keberlangsungan platform ini!",
+            'subject' => "Top Up Token Berhasil - {$selected['name']} Ditambahkan 🌟",
+            'content' => "Terima kasih atas pembelian Anda!\n\nPembayaran Anda via Midtrans QRIS telah berhasil diverifikasi oleh sistem kami secara otomatis.\n\nDetail Pembelian:\n- Paket: {$selected['name']}\n- Jumlah Token: +{$selected['credits']} Token\n- Total Biaya: {$selected['price']} (Lunas)\n- Invoice ID: INV-" . now()->format('YmdHis') . "-A\n- Waktu Transaksi: " . now()->format('d M Y, H:i') . " WIB\n\nSaldo token workspace '{$workspace->name}' Anda telah berhasil diperbarui. Periksa halaman Pricing untuk melihat detail kuota Anda. Terima kasih telah mendukung keberlangsungan platform ini!",
             'unread' => true,
         ]);
 
-        return redirect()->back()->with('success', "Pembelian {$selected['name']} berhasil! +{$selected['credits']} Kredit telah ditambahkan ke workspace {$workspace->name}.");
+        return redirect()->back()->with('success', "Pembelian {$selected['name']} berhasil! +{$selected['credits']} Token telah ditambahkan ke workspace {$workspace->name}.");
     }
 
     /**
@@ -278,7 +278,7 @@ class WorkspaceController extends Controller
             'avatar' => $user->avatar ?: strtoupper(substr($user->name, 0, 1)),
             'avatar_bg' => 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
             'subject' => "{$user->name} mengundang Anda ke Workspace {$workspace->name}",
-            'content' => "{$user->name} ({$user->email}) mengundang Anda untuk berkolaborasi di workspace miliknya: '{$workspace->name}'.\n\nSetelah bergabung, Anda akan dapat mengakses proyek-proyek bersama dan menggunakan token kredit di workspace ini secara terpusat.",
+            'content' => "{$user->name} ({$user->email}) mengundang Anda untuk berkolaborasi di workspace miliknya: '{$workspace->name}'.\n\nSetelah bergabung, Anda akan dapat mengakses proyek-proyek bersama dan menggunakan token di workspace ini secara terpusat.",
             'unread' => true,
             'workspace_id' => $workspace->id,
             'invitation_status' => 'pending',

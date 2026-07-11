@@ -14,10 +14,10 @@
         {{-- Stats Grid --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {{-- Card 1 --}}
-            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
+            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between min-h-[144px]">
                 <div class="flex items-center justify-between text-zinc-400">
                     <span class="text-sm font-medium">Workspace Terdaftar</span>
-                    <span class="text-xl">📁</span>
+                    <img src="{{ asset('assets/icon-images/cube-icon.png') }}" class="w-8 h-8 object-contain shrink-0" alt="Workspace">
                 </div>
                 <div class="mt-2">
                     <div class="text-3xl font-bold text-white">{{ count($workspaces) }} Workspace</div>
@@ -26,10 +26,10 @@
             </div>
 
             {{-- Card 2 --}}
-            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
+            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between min-h-[144px]">
                 <div class="flex items-center justify-between text-zinc-400">
                     <span class="text-sm font-medium">Total Proyek</span>
-                    <span class="text-xl">🚀</span>
+                    <img src="{{ asset('assets/svg/folder-icon.svg') }}" class="w-8 h-8 object-contain shrink-0" alt="Projects">
                 </div>
                 <div class="mt-2">
                     <div class="text-3xl font-bold text-white">{{ count($projects) }} Project</div>
@@ -38,10 +38,10 @@
             </div>
 
             {{-- Card 3 --}}
-            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between h-36">
+            <div class="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 p-6 flex flex-col justify-between min-h-[144px]">
                 <div class="flex items-center justify-between text-zinc-400">
                     <span class="text-sm font-medium">PRD Ter-generate</span>
-                    <span class="text-xl">📄</span>
+                    <img src="{{ asset('assets/svg/compass-icon.svg') }}" class="w-8 h-8 object-contain shrink-0" alt="PRD">
                 </div>
                 <div class="mt-2">
                     <div class="text-3xl font-bold text-white">{{ $projects->filter(fn($p) => !empty($p->prd_markdown))->count() }} Dokumen</div>

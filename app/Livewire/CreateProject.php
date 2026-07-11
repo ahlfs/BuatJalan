@@ -53,7 +53,7 @@ class CreateProject extends Component
         }
 
         if ($workspace->tokens_balance < 10) {
-            return ['error' => 'Saldo koin Anda tidak mencukupi untuk membuat proyek baru (Dibutuhkan 10 Kredit).'];
+            return ['error' => 'Saldo koin Anda tidak mencukupi untuk membuat proyek baru (Dibutuhkan 10 Token).'];
         }
 
         @set_time_limit(180);
@@ -169,7 +169,7 @@ JSON Structure:
                 'user_id' => $user->id,
                 'type' => 'generation',
                 'amount' => -10,
-                'description' => "Membuat Proyek Baru: {$data['title']} (-10 Kredit)",
+                'description' => "Membuat Proyek Baru: {$data['title']} (-10 Token)",
             ]);
 
             // 5. Save to database under current user

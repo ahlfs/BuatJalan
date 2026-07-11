@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('workspaces', function (Blueprint $table) {
@@ -19,6 +16,10 @@ return new class extends Migration
             $table->integer('tokens_balance')->default(20);
             $table->timestamps();
         });
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('current_workspace_id')->nullable()->constrained('workspaces')->onDelete('set null');
+        });
     }
 
     /**
@@ -26,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['current_workspace_id']);
+            $table->dropColumn('current_workspace_id');
+        });
         Schema::dropIfExists('workspaces');
     }
 };

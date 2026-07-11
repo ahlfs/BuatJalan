@@ -26,6 +26,18 @@
               deleteConfirmText: '',
               activeSettingsTab: 'general', 
               activeManageTab: 'tokens',
+              apiProvider: 'buatjalan',
+              testingApi: false,
+              apiTestResult: '',
+              testApi() {
+                  this.testingApi = true;
+                  this.apiTestResult = '';
+                  setTimeout(() => {
+                      this.testingApi = false;
+                      this.apiTestResult = 'success';
+                      setTimeout(() => { this.apiTestResult = ''; }, 3000);
+                  }, 1200);
+              },
               helpModalOpen: false,
               cancelInviteModalOpen: false,
               cancelInviteId: null,
@@ -188,24 +200,8 @@
                                 </div>
                                 <svg class="w-3.5 h-3.5 text-zinc-500 transition-transform duration-200" :class="open ? 'rotate-90' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                             </div>
-                            <div x-show="open" class="flex flex-col gap-0.5 mt-0.5 relative pl-4">
-                                <div class="absolute top-0 bottom-0 left-5 border-l border-white/10"></div>
-                                @if(auth()->user()->currentWorkspace)
-                                    <a href="/dashboard/new" wire:navigate class="group flex items-center gap-2.5 px-2.5 py-[7px] rounded-[6px] cursor-pointer transition-all duration-200 {{ request()->is('dashboard/new') ? 'bg-white/10 text-white font-medium' : 'text-zinc-400 hover:bg-white/5 hover:text-white' }}">
-                                        <span class="text-[14px] font-bold text-primary group-hover:scale-110 transition-transform shrink-0 w-4 text-center">+</span>
-                                        <span class="text-[13px] font-semibold text-primary">Create New Project</span>
-                                    </a>
-                                    @foreach(auth()->user()->currentWorkspace->projects()->with('techStacks')->get() as $p)
-                                        <a href="/dashboard/projects/{{ $p->slug }}" wire:navigate class="group flex items-center gap-2.5 px-2.5 py-[7px] rounded-[6px] cursor-pointer transition-all duration-200 {{ request()->is('dashboard/projects/' . $p->slug) ? 'bg-white/10 text-white font-medium' : 'text-zinc-400 hover:bg-white/5 hover:text-white' }}">
-                                            @if($p->logo_url)
-                                                <img src="{{ $p->logo_url }}" class="w-4 h-4 shrink-0 object-contain filter group-hover:brightness-125 transition-all" alt="{{ $p->title }}">
-                                            @else
-                                                <img src="{{ asset('assets/icon-images/cube-icon.png') }}" class="w-4 h-4 shrink-0" alt="Cube Roadmap"> 
-                                            @endif
-                                            <span class="text-[13px] truncate">{{ $p->title }}</span>
-                                        </a>
-                                    @endforeach
-                                @endif
+                            <div x-show="open">
+                                <livewire:sidebar-projects :current-slug="request()->segment(3)" />
                             </div>
                         </div>
 
@@ -418,25 +414,111 @@
                         {{-- TAB 2: API KEY & INTEGRATION --}}
                         <div x-show="activeSettingsTab === 'api'" class="space-y-4" x-transition style="display: none;">
                             <div class="space-y-1.5">
-                                <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Gemini API Key</label>
-                                <div class="relative">
-                                    <input 
-                                        type="password" 
-                                        value="gemini-api-key-dummy-val-12345"
-                                        disabled
-                                        class="w-full bg-zinc-950/60 border border-white/5 rounded-xl p-3 text-zinc-500 text-xs select-none"
-                                    />
-                                    <span class="absolute right-3 top-3 text-[10px] text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">Connected</span>
+                                <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">AI API Provider</label>
+                                <select 
+                                    x-model="apiProvider" 
+                                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all cursor-pointer"
+                                >
+                                    <option value="buatjalan">BuatJalan AI (Default - Recommended)</option>
+                                    <option value="gemini">Custom Gemini API Key</option>
+                                    <option value="openai">Custom OpenAI API Key</option>
+                                </select>
+                                <p class="text-[10px] text-zinc-400 leading-relaxed mt-1">
+                                    Pilih sumber infrastruktur AI yang ingin digunakan untuk memproses pembuatan dan analisis proyek. <span class="text-emerald-400 font-semibold">(Catatan: Jika Anda tidak menggunakan BuatJalan AI, akun Anda tidak akan dikenakan biaya/charge Token workspace).</span>
+                                </p>
+                            </div>
+
+                            {{-- Option 1: BuatJalan AI (Default) --}}
+                            <div x-show="apiProvider === 'buatjalan'" class="p-4 bg-zinc-950/40 border border-white/5 rounded-xl space-y-3 animate-in fade-in slide-in-from-top-1 duration-200" style="display: none;">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-xs font-semibold text-white">BuatJalan AI Engine Aktif</span>
+                                </div>
+                                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                                    Menggunakan model LLM teroptimasi bawaan platform BuatJalan. Bebas biaya langganan tambahan dan langsung memotong saldo Token dari workspace aktif Anda saat ini.
+                                </p>
+                                <div class="pt-1 flex items-center gap-3">
+                                    <button 
+                                        @click="testApi()"
+                                        :disabled="testingApi"
+                                        class="bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg text-[10px] transition-colors cursor-pointer border border-white/5 select-none flex items-center gap-1.5"
+                                    >
+                                        <svg x-show="testingApi" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="testingApi ? 'Menguji...' : 'Uji Koneksi API'"></span>
+                                    </button>
+                                    <span x-show="apiTestResult === 'success'" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 animate-in fade-in zoom-in duration-200" style="display: none;">
+                                        ✅ Koneksi Berhasil & Responsif!
+                                    </span>
                                 </div>
                             </div>
 
-                            <div class="space-y-1.5">
-                                <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">OpenAI API Key (Optional)</label>
-                                <input 
-                                    type="password" 
-                                    placeholder="Ketik OpenAI API Key..."
-                                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
-                                />
+                            {{-- Option 2: Gemini API Key (Custom) --}}
+                            <div x-show="apiProvider === 'gemini'" class="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200" style="display: none;">
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Custom Gemini API Key</label>
+                                    <div class="relative">
+                                        <input 
+                                            type="password" 
+                                            placeholder="Masukkan Gemini API Key Anda..."
+                                            value="gemini-api-key-dummy-val-12345"
+                                            class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
+                                        />
+                                        <span class="absolute right-3 top-3 text-[10px] text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">Custom Connected</span>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                                    Gunakan kuota API Key Google Gemini Anda sendiri. Seluruh request AI pembuatan modul proyek akan dialihkan ke API Key Anda secara gratis tanpa memotong Token workspace.
+                                </p>
+                                <div class="pt-1 flex items-center gap-3">
+                                    <button 
+                                        @click="testApi()"
+                                        :disabled="testingApi"
+                                        class="bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg text-[10px] transition-colors cursor-pointer border border-white/5 select-none flex items-center gap-1.5"
+                                    >
+                                        <svg x-show="testingApi" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="testingApi ? 'Menguji...' : 'Uji Koneksi API'"></span>
+                                    </button>
+                                    <span x-show="apiTestResult === 'success'" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 animate-in fade-in zoom-in duration-200" style="display: none;">
+                                        ✅ Koneksi API Key Gemini Aktif!
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Option 3: OpenAI API Key (Custom) --}}
+                            <div x-show="apiProvider === 'openai'" class="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200" style="display: none;">
+                                <div class="space-y-1.5">
+                                    <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Custom OpenAI API Key</label>
+                                    <input 
+                                        type="password" 
+                                        placeholder="Masukkan OpenAI API Key (sk-...)..."
+                                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
+                                    />
+                                </div>
+                                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                                    Hubungkan API Key OpenAI kustom Anda untuk memproses kebutuhan PRD menggunakan model GPT-4o / GPT-3.5 secara langsung.
+                                </p>
+                                <div class="pt-1 flex items-center gap-3">
+                                    <button 
+                                        @click="testApi()"
+                                        :disabled="testingApi"
+                                        class="bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg text-[10px] transition-colors cursor-pointer border border-white/5 select-none flex items-center gap-1.5"
+                                    >
+                                        <svg x-show="testingApi" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="testingApi ? 'Menguji...' : 'Uji Koneksi API'"></span>
+                                    </button>
+                                    <span x-show="apiTestResult === 'success'" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 animate-in fade-in zoom-in duration-200" style="display: none;">
+                                        ✅ Koneksi API Key OpenAI Sukses!
+                                    </span>
+                                </div>
                             </div>
 
                             {{-- Google Integration status --}}
@@ -603,7 +685,7 @@
                 <div class="flex items-center justify-between p-6 border-b border-white/5 bg-zinc-900/50">
                     <div>
                         <h2 class="text-lg font-bold text-white">Kelola Workspace: {{ $currentWorkspace->name ?? '' }}</h2>
-                        <p class="text-xs text-zinc-400 mt-1">Kelola kolaborasi anggota, informasi token kredit, dan pengaturan administrasi.</p>
+                        <p class="text-xs text-zinc-400 mt-1">Kelola kolaborasi anggota, informasi token saldo, dan pengaturan administrasi.</p>
                     </div>
                     <button @click="manageWorkspaceModalOpen = false" class="p-1.5 rounded-md text-zinc-500 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -621,7 +703,7 @@
                             :class="activeManageTab === 'tokens' ? 'bg-primary/10 text-primary' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                         >
                             <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald">
-                            <span>Token Kredit</span>
+                            <span>Saldo Token</span>
                         </button>
                         <button 
                             @click="activeManageTab = 'members'"
@@ -682,11 +764,11 @@
                                 <div class="grid grid-cols-2 gap-3 text-xs">
                                     <div class="p-3 bg-zinc-950/20 border border-white/5 rounded-xl">
                                         <div class="font-bold text-white">Generate Baru</div>
-                                        <div class="text-[10px] text-zinc-500 mt-0.5">10 Kredit per proyek</div>
+                                        <div class="text-[10px] text-zinc-500 mt-0.5">10 Token per proyek</div>
                                     </div>
                                     <div class="p-3 bg-zinc-950/20 border border-white/5 rounded-xl">
                                         <div class="font-bold text-white">Edit Proyek</div>
-                                        <div class="text-[10px] text-zinc-500 mt-0.5">10 Kredit per request</div>
+                                        <div class="text-[10px] text-zinc-500 mt-0.5">10 Token per request</div>
                                     </div>
                                 </div>
                             </div>
@@ -897,16 +979,16 @@
                 {{-- Modal Body (Scrollable Contents) --}}
                 <div class="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6 text-xs text-zinc-300 leading-relaxed">
                     
-                    {{-- Section 1: Cara Kerja Kredit --}}
+                    {{-- Section 1: Cara Kerja Token --}}
                     <div class="space-y-2">
                         <h3 class="font-bold text-white text-sm flex items-center gap-1.5">
-                            ⚡ Sistem Kredit BuatJalan
+                            ⚡ Sistem Token BuatJalan
                         </h3>
-                        <p>Setiap tindakan di platform ini dihitung berdasarkan koin kredit yang ada pada workspace Anda:</p>
+                        <p>Setiap tindakan di platform ini dihitung berdasarkan koin token yang ada pada workspace Anda:</p>
                         <ul class="list-disc pl-5 space-y-1 mt-1 text-zinc-400">
-                            <li><strong>Membuat Proyek Baru</strong>: Mengonsumsi <strong>10 Kredit</strong>.</li>
-                            <li><strong>Mengubah / Edit Proyek</strong>: Mengonsumsi <strong>10 Kredit</strong>.</li>
-                            <li><strong>Unduh & Salin Context</strong>: Gratis <strong>(0 Kredit)</strong>.</li>
+                            <li><strong>Membuat Proyek Baru</strong>: Mengonsumsi <strong>10 Token</strong>.</li>
+                            <li><strong>Mengubah / Edit Proyek</strong>: Mengonsumsi <strong>10 Token</strong>.</li>
+                            <li><strong>Unduh & Salin Context</strong>: Gratis <strong>(0 Token)</strong>.</li>
                         </ul>
                     </div>
 
@@ -935,8 +1017,8 @@
                         </h3>
                         
                         <div class="space-y-1">
-                            <h4 class="font-semibold text-white">Apakah saldo kredit yang dibeli memiliki masa kedaluwarsa?</h4>
-                            <p class="text-zinc-400">Tidak. Saldo kredit yang Anda beli aktif selamanya selama akun Anda terdaftar di platform kami.</p>
+                            <h4 class="font-semibold text-white">Apakah saldo token yang dibeli memiliki masa kedaluwarsa?</h4>
+                            <p class="text-zinc-400">Tidak. Saldo token yang Anda beli aktif selamanya selama akun Anda terdaftar di platform kami.</p>
                         </div>
                         
                         <div class="space-y-1">

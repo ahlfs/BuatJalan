@@ -61,6 +61,9 @@ class ProjectDetail extends Component
             'title' => $this->editTitleInput,
             'description' => $this->editDescInput
         ]);
+
+        // Dispatch dynamic sidebar refresh event
+        $this->dispatch('refresh-sidebar');
     }
 
     /**
@@ -78,7 +81,7 @@ class ProjectDetail extends Component
         }
 
         if ($workspace->tokens_balance < 10) {
-            return ['error' => 'Saldo koin Anda tidak mencukupi untuk mengubah proyek (Dibutuhkan 10 Kredit).'];
+            return ['error' => 'Saldo koin Anda tidak mencukupi untuk mengubah proyek (Dibutuhkan 10 Token).'];
         }
 
         if (empty(trim($requestText))) {
@@ -205,7 +208,7 @@ JSON Structure:
                 'user_id' => $user->id,
                 'type' => 'modification',
                 'amount' => -10,
-                'description' => "Mengubah Proyek: {$data['title']} (-10 Kredit)",
+                'description' => "Mengubah Proyek: {$data['title']} (-10 Token)",
             ]);
 
             // 4. Save updates via transaction
@@ -293,6 +296,9 @@ JSON Structure:
             $this->editRequest = '';
             $this->editTitleInput = $this->project->title;
             $this->editDescInput = $this->project->description;
+
+            // Dispatch dynamic sidebar refresh event
+            $this->dispatch('refresh-sidebar');
 
             return [
                 'success' => true,

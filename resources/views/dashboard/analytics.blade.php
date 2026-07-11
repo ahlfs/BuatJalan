@@ -29,7 +29,7 @@
                 <div class="text-2xl font-extrabold text-white">{{ count($projects) }}</div>
             </div>
             <div class="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center text-lg shadow-inner">
-                📁
+                <img src="{{ asset('assets/svg/folder-icon.svg') }}" class="w-10 h-auto" alt="Folder">
             </div>
         </div>
 
@@ -40,7 +40,7 @@
                 <div class="text-2xl font-extrabold text-white">{{ $projects->sum(fn($p) => $p->techStacks->count()) }}</div>
             </div>
             <div class="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center text-lg shadow-inner">
-                💻
+                <img src="{{ asset('assets/svg/bulb-icon.svg') }}" class="w-10 h-auto" alt="Terminal">
             </div>
         </div>
 
@@ -51,7 +51,7 @@
                 <div class="text-2xl font-extrabold text-white">{{ $projects->sum(fn($p) => $p->roadmaps->count()) }}</div>
             </div>
             <div class="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center text-lg shadow-inner">
-                🛣️
+                <img src="{{ asset('assets/svg/compass-icon.svg') }}" class="w-10 h-auto" alt="Roadmap">
             </div>
         </div>
 
@@ -62,7 +62,7 @@
                 <div class="text-2xl font-extrabold text-white">{{ $projects->sum(fn($p) => $p->dbSchemas->count()) }}</div>
             </div>
             <div class="w-10 h-10 rounded-xl bg-zinc-950 flex items-center justify-center text-lg shadow-inner">
-                🗄️
+                <img src="{{ asset('assets/svg/database-icon.svg') }}" class="w-10 h-auto" alt="Database">
             </div>
         </div>
 
@@ -106,7 +106,7 @@
                                 $color = 'emerald';
                                 $badge = 'Create';
                                 $actionText = 'membuat';
-                                $creditsText = '-' . abs($trans->amount) . ' Kredit';
+                                $creditsText = '-' . abs($trans->amount) . ' Token';
                                 $creditsColor = 'text-emerald-400';
 
                                 if ($trans->type === 'modification') {
@@ -118,7 +118,7 @@
                                     $color = 'blue';
                                     $badge = 'Top Up';
                                     $actionText = 'melakukan top up untuk';
-                                    $creditsText = '+' . $trans->amount . ' Kredit';
+                                    $creditsText = '+' . $trans->amount . ' Token';
                                     $creditsColor = 'text-blue-400';
                                 }
                             @endphp
@@ -136,7 +136,7 @@
                                                 <span class="text-white font-semibold">"{{ $trans->description }}"</span>.
                                             </p>
                                             <p class="text-[10px] text-zinc-500 mt-1">
-                                                Mutasi Kredit: <span class="font-bold {{ $creditsColor }}">{{ $creditsText }}</span>
+                                                Mutasi Token: <span class="font-bold {{ $creditsColor }}">{{ $creditsText }}</span>
                                             </p>
                                         </div>
                                         <span class="text-[9px] font-bold uppercase tracking-wider text-zinc-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full shrink-0">

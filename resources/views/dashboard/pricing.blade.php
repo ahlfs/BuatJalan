@@ -5,6 +5,7 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto py-4 space-y-10 font-sans" x-data="{
+    showConfirmModal: false,
     showQrisModal: false,
     selectedPackage: '',
     selectedPrice: '',
@@ -12,11 +13,16 @@
     step: 'loading', // 'loading' -> 'qris' -> 'verifying' -> 'success'
     currentForm: null,
     
-    startPurchase(packageKey, price, credits, formElement) {
+    confirmPurchase(packageKey, price, credits, formElement) {
         this.selectedPackage = packageKey;
         this.selectedPrice = price;
         this.selectedCredits = credits;
         this.currentForm = formElement;
+        this.showConfirmModal = true;
+    },
+    
+    startPurchaseAfterConfirm() {
+        this.showConfirmModal = false;
         this.showQrisModal = true;
         this.step = 'loading';
         
@@ -46,16 +52,16 @@
     
     {{-- Header Intro --}}
     <div class="text-center max-w-2xl mx-auto space-y-3">
-        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Pilih Paket Kredit Anda</h1>
-        <p class="text-sm text-zinc-400">Dapatkan akses instan ke AI Architect kami. Saldo kredit yang Anda beli aktif selamanya tanpa batas waktu kedaluwarsa.</p>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Pilih Paket Token Anda</h1>
+        <p class="text-sm text-zinc-400">Dapatkan akses instan ke AI Architect kami. Saldo token yang Anda beli aktif selamanya tanpa batas waktu kedaluwarsa.</p>
         
         {{-- Credit Info badges --}}
         <div class="inline-flex flex-wrap items-center justify-center gap-3 pt-3">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 border border-primary/20 text-primary">
-                ⚡ 10 Kredit = 1x Generate Project Baru
+                ⚡ 10 Token = 1x Generate Project Baru
             </span>
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-zinc-300">
-                🔧 10 Kredit = 1x Edit / Ubah Project
+                🔧 10 Token = 1x Edit / Ubah Project
             </span>
         </div>
     </div>
@@ -80,10 +86,10 @@
                 {{-- Credit Quantity --}}
                 <div class="bg-zinc-950/60 rounded-xl p-4 border border-white/5 flex items-center justify-between">
                     <div>
-                        <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Kuota Kredit</div>
-                        <div class="text-xl font-black text-white mt-0.5">50 Kredit</div>
+                        <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Kuota Token</div>
+                        <div class="text-xl font-black text-white mt-0.5">50 Token</div>
                     </div>
-                    <span class="text-2xl">🌱</span>
+                    <span class="text-2xl"><img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-10 h-auto" alt="High Performance"></span>
                 </div>
 
                 <hr class="border-white/5">
@@ -92,24 +98,24 @@
                 <ul class="space-y-3 text-xs text-zinc-400">
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Kapasitas hingga 5x Generate proyek</span>
+                        <span>Setara dengan 5x Generate proyek baru</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Sisa kredit aktif selamanya (no expired)</span>
+                        <span>Atau setara dengan 5x Edit/Ubah proyek</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Model Cepat Gemini Flash 3</span>
+                        <span>Token aktif selamanya (Tanpa Kedaluwarsa)</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Rincian Tech Stack & Rute Roadmap</span>
+                        <span>Bisa digunakan oleh seluruh anggota workspace</span>
                     </li>
                 </ul>
             </div>
             
-            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('starter', 'Rp 19.000', 50, $el)">
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="confirmPurchase('starter', 'Rp 19.000', 50, $el)">
                 @csrf
                 <input type="hidden" name="package" value="starter">
                 <button type="submit" class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
@@ -138,10 +144,10 @@
                 {{-- Credit Quantity --}}
                 <div class="bg-primary/5 rounded-xl p-4 border border-primary/20 flex items-center justify-between">
                     <div>
-                        <div class="text-[10px] text-primary/70 font-bold uppercase tracking-wider">Kuota Kredit</div>
-                        <div class="text-xl font-black text-primary mt-0.5">150 Kredit</div>
+                        <div class="text-[10px] text-primary/70 font-bold uppercase tracking-wider">Kuota Token</div>
+                        <div class="text-xl font-black text-primary mt-0.5">150 Token</div>
                     </div>
-                    <span class="text-2xl">🔥</span>
+                    <span class="text-2xl"><img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-10 h-auto" alt="High Performance"></span>
                 </div>
 
                 <hr class="border-white/5">
@@ -150,24 +156,24 @@
                 <ul class="space-y-3 text-xs text-zinc-300">
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Kapasitas hingga 15x Generate proyek</span>
+                        <span>Setara dengan 15x Generate proyek baru</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Sisa kredit aktif selamanya (no expired)</span>
+                        <span>Atau setara dengan 15x Edit/Ubah proyek</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Rancangan Tabel & Kolom Database</span>
+                        <span>Token aktif selamanya (Tanpa Kedaluwarsa)</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Antrean Generate Prioritas Tinggi</span>
+                        <span>Bisa digunakan oleh seluruh anggota workspace</span>
                     </li>
                 </ul>
             </div>
             
-            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('popular', 'Rp 49.000', 150, $el)">
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="confirmPurchase('popular', 'Rp 49.000', 150, $el)">
                 @csrf
                 <input type="hidden" name="package" value="popular">
                 <button type="submit" class="w-full mt-8 bg-primary text-primary-foreground hover:bg-primary/95 font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer shadow-lg shadow-primary/20">
@@ -193,10 +199,10 @@
                 {{-- Credit Quantity --}}
                 <div class="bg-zinc-950/60 rounded-xl p-4 border border-white/5 flex items-center justify-between">
                     <div>
-                        <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Kuota Kredit</div>
-                        <div class="text-xl font-black text-white mt-0.5">500 Kredit</div>
+                        <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Kuota Token</div>
+                        <div class="text-xl font-black text-white mt-0.5">500 Token</div>
                     </div>
-                    <span class="text-2xl">🚀</span>
+                    <span class="text-2xl"><img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-10 h-auto" alt="High Performance"></span>
                 </div>
 
                 <hr class="border-white/5">
@@ -205,24 +211,24 @@
                 <ul class="space-y-3 text-xs text-zinc-400">
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Kapasitas hingga 50x Generate proyek</span>
+                        <span>Setara dengan 50x Generate proyek baru</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Sisa kredit aktif selamanya (no expired)</span>
+                        <span>Atau setara dengan 50x Edit/Ubah proyek</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Ekspor PRD & Readme Tanpa Batas</span>
+                        <span>Token aktif selamanya (Tanpa Kedaluwarsa)</span>
                     </li>
                     <li class="flex items-center gap-2.5">
                         <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>Akses Model AI Premium Lainnya</span>
+                        <span>Bisa digunakan oleh seluruh anggota workspace</span>
                     </li>
                 </ul>
             </div>
             
-            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="startPurchase('developer', 'Rp 99.000', 500, $el)">
+            <form action="{{ route('pricing.buy') }}" method="POST" class="m-0" @submit.prevent="confirmPurchase('developer', 'Rp 99.000', 500, $el)">
                 @csrf
                 <input type="hidden" name="package" value="developer">
                 <button type="submit" class="w-full mt-8 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5">
@@ -236,13 +242,80 @@
     {{-- Safe Guarantee Banner --}}
     <div class="mt-12 bg-zinc-900/20 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left justify-between">
         <div class="space-y-1">
-            <h4 class="text-sm font-bold text-white flex items-center gap-1.5 justify-center sm:justify-start">
-                🔒 Pembayaran Aman & Instan
+            <h4 class="text-sm font-bold text-white flex items-center gap-2 justify-center sm:justify-start">
+                <img src="{{ asset('assets/svg/secure-icon.svg') }}" class="w-5 h-5 object-contain shrink-0" alt="Shield">
+                <span>Pembayaran Aman & Instan</span>
             </h4>
             <p class="text-xs text-zinc-400 leading-relaxed">Mendukung pembayaran langsung menggunakan QRIS (GoPay, OVO, Dana, LinkAja) atau transfer Virtual Account Bank Indonesia.</p>
         </div>
         <div class="flex items-center gap-3 shrink-0">
-            <span class="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase">Powered by Midtrans</span>
+            <span class="text-[10px] font-semibold tracking-wider text-zinc-500 uppercase">Powered by DOKU</span>
+        </div>
+    </div>
+
+    {{-- CONFIRMATION MODAL --}}
+    <div 
+        x-show="showConfirmModal" 
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showConfirmModal = false"></div>
+        <div class="relative bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-200">
+            
+            {{-- Header --}}
+            <div class="p-6 border-b border-white/5 bg-zinc-900/50 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                        <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-4 h-4 object-contain" alt="Emerald">
+                    </div>
+                    <h3 class="text-sm font-bold text-white">Konfirmasi Pembelian</h3>
+                </div>
+                <button @click="showConfirmModal = false" class="p-1.5 rounded-md text-zinc-500 hover:bg-white/5 hover:text-white transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                    Token yang dibeli akan langsung ditambahkan secara permanen ke dalam **Workspace Aktif** Anda saat ini:
+                </p>
+
+                <div class="p-3 bg-zinc-950 border border-white/5 rounded-xl flex items-center gap-3">
+                    <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-5 h-5 object-contain shrink-0" alt="Emerald">
+                    <div class="min-w-0">
+                        <div class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Workspace Aktif</div>
+                        <div class="text-xs font-bold text-white truncate" x-text="activeWorkspace"></div>
+                    </div>
+                </div>
+
+                <div class="text-xs text-zinc-400">
+                    Detail Pembelian:
+                    <ul class="mt-1.5 space-y-1 text-zinc-300 pl-4 list-disc">
+                        <li>Paket: <span class="font-semibold text-white" x-text="selectedPackage.charAt(0).toUpperCase() + selectedPackage.slice(1) + ' Pack'"></span></li>
+                        <li>Harga: <span class="font-semibold text-white" x-text="selectedPrice"></span></li>
+                        <li>Jumlah: <span class="font-semibold text-emerald-400" x-text="selectedCredits + ' Emerald Token'"></span></li>
+                    </ul>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="p-6 border-t border-white/5 bg-zinc-900/30 flex items-center justify-end gap-2.5">
+                <button 
+                    @click="showConfirmModal = false"
+                    class="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 px-4 rounded-xl text-xs transition-colors cursor-pointer border border-white/5 select-none"
+                >
+                    Batal
+                </button>
+                <button 
+                    @click="startPurchaseAfterConfirm()"
+                    class="bg-primary hover:bg-primary/95 text-primary-foreground font-semibold py-2 px-4 rounded-xl text-xs transition-colors cursor-pointer shadow-lg shadow-primary/20 select-none"
+                >
+                    Ya, Lanjutkan
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -274,7 +347,7 @@
                 <div class="p-5 border-b border-white/5 bg-zinc-900/50 flex items-center justify-between">
                     <div>
                         <h3 class="text-xs font-bold text-white">Pembayaran QRIS</h3>
-                        <p class="text-[9px] text-zinc-400 mt-0.5" x-text="'Paket: ' + selectedPackage.toUpperCase() + ' (' + selectedCredits + ' Kredit)'"></p>
+                        <p class="text-[9px] text-zinc-400 mt-0.5" x-text="'Paket: ' + selectedPackage.toUpperCase() + ' (' + selectedCredits + ' Token)'"></p>
                     </div>
                     <span class="text-xs font-mono font-black text-white" x-text="selectedPrice"></span>
                 </div>
@@ -292,12 +365,12 @@
                         <div x-show="step === 'verifying' || step === 'success'" 
                              class="absolute inset-0 flex flex-col items-center justify-center bg-emerald-500/5 backdrop-blur-[1px] animate-in fade-in zoom-in duration-300"
                              style="display: none;">
-                            <div class="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[bounce_0.5s_ease-out]">
-                                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </div>
-                            <span class="text-sm text-emerald-600 font-bold mt-3 uppercase tracking-wider">Lunas</span>
+                             <div class="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[bounce_0.5s_ease-out]">
+                                 <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                                     <polyline points="20 6 9 17 4 12"></polyline>
+                                 </svg>
+                             </div>
+                             <span class="text-sm text-emerald-600 font-bold mt-3 uppercase tracking-wider">Lunas</span>
                         </div>
                     </div>
 
@@ -341,11 +414,11 @@
                             Mendapatkan data pelunasan dari server merchant...
                         </p>
 
-                        <p class="text-[10px] text-emerald-400/80 font-medium leading-relaxed max-w-xs mx-auto" x-show="step === 'success'" style="display: none;" x-text="'+' + selectedCredits + ' Kredit sedang ditambahkan ke workspace Anda...'">
+                        <p class="text-[10px] text-emerald-400/80 font-medium leading-relaxed max-w-xs mx-auto" x-show="step === 'success'" style="display: none;" x-text="'+' + selectedCredits + ' Token sedang ditambahkan ke workspace Anda...'">
                         </p>
                     </div>
                 </div>
-            </div>
+            </div>/div>
 
         </div>
     </div>

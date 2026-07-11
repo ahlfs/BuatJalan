@@ -442,10 +442,10 @@
                 <div class="flex flex-col items-center md:items-end gap-2">
                     <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Platform Integrity</span>
                     <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-400 font-medium">
-                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">🔒 Secure Payment</span>
-                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">⚡ High Performance</span>
-                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">🤖 AI Orchestrator</span>
-                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1">☁️ Cloud Infrastructure</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1"><img src="{{ asset('assets/svg/secure-icon.svg') }}" class="w-3 h-3" alt="Secure Payment"> Secure Payment</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1"><img src="{{ asset('assets/svg/rocket-icon.svg') }}" class="w-3 h-3" alt="High Performance"> High Performance</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1"><img src="{{ asset('assets/svg/ai-icon.svg') }}" class="w-3 h-3" alt="AI Orchestrator"> AI Orchestrator</span>
+                        <span class="px-2 py-1 rounded bg-white/5 border border-white/5 flex items-center gap-1"><img src="{{ asset('assets/svg/cloud-icon.svg') }}" class="w-3 h-3" alt="Cloud Infrastructure"> Cloud Infrastructure</span>
                     </div>
                 </div>
             </div>
