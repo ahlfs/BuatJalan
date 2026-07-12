@@ -80,75 +80,83 @@ class CreateProject extends Component
             "- Target users: " . implode(', ', $this->q4) . "\n" .
             "- Coding skill level: " . implode(', ', $this->q5);
 
-        // 3. Craft prompt
-        $prompt = "You are a friendly Senior Product Manager and Developer Coach AI.
-Your target users are absolute coding beginners and 'vibecoders' (people who use AI code assistants, copy-paste snippets, and need simple step-by-step guidance).
+        // 3. Detect empty or vague input
+        $descTrimmed = trim($this->description);
+        $inputGuard = "";
+        if (mb_strlen($descTrimmed) < 10) {
+            $inputGuard = "PERINGATAN INPUT: Deskripsi pengguna sangat singkat/kosong (\"{$descTrimmed}\"). Kamu WAJIB tetap menghasilkan output JSON valid. Interpretasikan input secara kreatif — jika hanya berupa satu kata (misal 'toko', 'sekolah', 'chat'), kembangkan menjadi aplikasi lengkap yang logis berdasarkan kata kunci tersebut. Jika benar-benar kosong atau tidak bermakna, buatkan proyek contoh berupa 'Aplikasi Manajemen Tugas Sederhana' sebagai fallback.\n\n";
+        }
 
-TASK:
-Generate a complete software project spec, tech stack, roadmap, database schema, and cost estimate.
+        // 4. Craft prompt — Professional IT Project Manager
+        $prompt = "PERAN: Kamu adalah seorang IT Project Manager profesional berpengalaman 10+ tahun di industri software development Indonesia. Kamu memiliki keahlian mendalam dalam arsitektur sistem, perencanaan teknis, estimasi biaya infrastruktur, dan perancangan database relasional.
 
-TONE & LANG:
-- Language MUST be Bahasa Indonesia.
-- Use friendly, easy-to-understand, and encouraging language.
-- Avoid academic, overly complex database or infrastructure jargon. Explain terms clearly (e.g., explain what PK/FK means in simple words if showing columns).
-- Provide a clear, chronological, step-by-step roadmap.
-- Keep the output concise, practical, and highly focused. Avoid extremely wordy or repetitive explanations. The entire response must be under 2,500 tokens so it generates quickly without timing out.
+INSTRUKSI INTI:
+- Hasilkan spesifikasi proyek software yang DETAIL dan PROFESIONAL layaknya dokumen perencanaan teknis perusahaan IT sesungguhnya.
+- Bahasa output WAJIB Bahasa Indonesia, namun istilah teknis (nama teknologi, tipe data SQL, HTTP method) tetap dalam bahasa Inggris.
+- JANGAN bertele-tele. Langsung ke inti. Setiap kalimat harus membawa informasi baru. Target total output maksimal 2500 token untuk menjaga kecepatan respons.
+- Output HARUS berupa raw JSON valid tanpa pembungkus markdown (jangan gunakan \`\`\`json).
 
-CRITICAL ALIGNMENT RULES:
-1. The generated database schemas (`db_schemas`) and columns (`columns`) must match the tables, roles, and business logic described in the generated PRD 100%. (e.g. if the PRD has point rewards, verifications, or specific status flags, ensure tables like `points`, `verifications`, or fields like `status` are created).
-2. The generated step-by-step roadmap (`roadmaps`) must follow the exact features, role requirements, and development phases listed in the generated PRD, starting from database design, building core backend features, writing frontend UI, testing, and deployment.
-3. The generated roadmap (`roadmaps`) MUST NOT contain general high-level phases (like 'Desain', 'Pengembangan', 'Testing'). It must be a concrete, step-by-step programming checklist (e.g., Step 1: Setup Project & DB Config, Step 2: Create DB Migrations & Eloquent Models, Step 3: Implement Authentication, Step 4: Develop Core CRUD Controllers, Step 5: Integrate Gemini API, Step 6: Build UI & Charts, Step 7: Write Tests & Deploy). Every step description must specify exactly what database fields to setup, what files/controllers to create, or what commands to run (in friendly Bahasa Indonesia).
-
-PROJECT IDEA:
-\"{$this->description}\"
+{$inputGuard}IDE PROYEK DARI PENGGUNA:
+\"{$descTrimmed}\"
 
 {$techPreference}
 
 {$refinementInfo}
 
-You MUST return a JSON object with the following exact structure. Do not wrap the JSON inside markdown code blocks like ```json or anything else. Just return raw JSON.
+ATURAN KUALITAS OUTPUT:
+1. PRD (`prd_markdown`) harus menyertakan: ringkasan eksekutif, analisis masalah vs solusi (dalam tabel markdown), definisi peran pengguna, daftar fitur per modul/peran, alur bisnis utama (user journey), integrasi AI jika relevan, dan non-functional requirements (keamanan, performa, responsivitas).
+2. Database schema (`db_schemas`) WAJIB 100% konsisten dengan fitur dan peran yang disebutkan di PRD — setiap fitur bisnis harus tercermin dalam tabel dan kolomnya. Sertakan minimal kolom: id (PK), foreign keys yang relevan, timestamps (created_at, updated_at), dan kolom soft-delete jika sesuai.
+3. Roadmap (`roadmaps`) harus berupa checklist pemrograman konkret bertahap — BUKAN fase generik ('Desain', 'Development'). Setiap langkah harus menyebutkan secara spesifik: file apa yang dibuat, migration apa yang dijalankan, controller/model apa yang diimplementasi, atau command apa yang dieksekusi. Gunakan estimasi waktu realistis dalam format 'Hari X-Y'.
+4. Tech stack (`tech_stacks`) minimal 4 layer: Frontend, Backend, Database, Deployment. Tambahkan layer lain jika relevan (Authentication, Storage, Payment Gateway, AI/ML, dll).
+5. Biaya (`costs`) harus realistis untuk pasar Indonesia — pisahkan biaya sekali bayar (domain, SSL) dan biaya berulang (hosting/bulan, database/bulan). Jika bisa gratis (free tier), cantumkan harga 0.
+6. `first_deployment_cost` adalah total biaya one_time + 1 bulan pertama recurring.
 
-JSON Structure:
+STRUKTUR JSON YANG HARUS DIKEMBALIKAN:
 {
-  \"title\": \"Name of the project (e.g. TalentHub — University Talent Hub)\",
-  \"description\": \"A simple, friendly description in Bahasa Indonesia explaining what this app is and what it does for beginners.\",
-  \"prd_markdown\": \"# Product Requirements Document (PRD)\\n# [Project Title]\\n\\n## 1. Ringkasan Produk\\n[Brief product summary]\\n\\n## 2. Masalah yang Diselesaikan\\n[Table containing: # | Masalah | Solusi]\\n\\n## 3. Target Pengguna\\n- [Describe roles like Admin, Mahasiswa, etc.]\\n\\n## 4. Fitur Utama & Requirements\\n- [List features by user role/module, including points/ratings if applicable]\\n\\n## 5. Alur Bisnis Utama\\n- [Step-by-step description of the main user journey]\\n\\n## 6. Fitur AI (Jika Ada)\\n- [Details of Vertex AI / Gemini integration if relevant]\\n\\n## 7. Non-Functional Requirements\\n- Bahasa UI: Bahasa Indonesia\\n- Responsive: Yes\\n- Security & Performance targets\",
-  \"first_deployment_cost\": 500000,
+  \"title\": \"Nama proyek yang deskriptif dan profesional\",
+  \"description\": \"Deskripsi singkat 1-2 kalimat dalam Bahasa Indonesia tentang apa aplikasi ini dan siapa penggunanya.\",
+  \"prd_markdown\": \"# PRD — [Judul Proyek]\\n\\n## 1. Ringkasan Eksekutif\\n...\\n\\n## 2. Masalah & Solusi\\n| # | Masalah | Solusi |\\n|---|---------|-------|\\n| 1 | ... | ... |\\n\\n## 3. Target Pengguna & Peran\\n...\\n\\n## 4. Fitur Utama per Modul\\n...\\n\\n## 5. Alur Bisnis Utama\\n...\\n\\n## 6. Integrasi AI (Jika Ada)\\n...\\n\\n## 7. Non-Functional Requirements\\n- Bahasa UI: Bahasa Indonesia\\n- Responsive: Ya (Mobile-first)\\n- Keamanan: CSRF, XSS protection, hashed passwords\\n- Performa: < 2 detik load time\",
+  \"first_deployment_cost\": 0,
   \"tech_stacks\": [
     {
-      \"layer\": \"Frontend / Backend / Database / Deployment / etc.\",
-      \"name\": \"React.js / Laravel / Postgres / etc.\",
-      \"icon\": \"Single emoji representing this layer (e.g. 🌐, 📁, ☁, 🚀)\",
-      \"description\": \"Simple explanation of what this tech does in this project (Bahasa Indonesia).\"
+      \"layer\": \"Frontend\",
+      \"name\": \"React.js\",
+      \"icon\": \"🌐\",
+      \"description\": \"Penjelasan singkat peran teknologi ini dalam proyek (Bahasa Indonesia).\"
     }
   ],
   \"roadmaps\": [
     {
-      \"title\": \"Step/Phase Title (e.g. Setup Database)\",
-      \"time\": \"Estimated timeframe (e.g. Hari 1-2)\",
-      \"icon\": \"Single emoji (e.g. ⚙️, 💻, 💳, 🚀)\",
-      \"description\": \"Friendly, clear step-by-step instructions on what to do (Bahasa Indonesia).\"
+      \"title\": \"Judul langkah konkret (misal: Setup Project & Konfigurasi Database)\",
+      \"time\": \"Hari 1-2\",
+      \"icon\": \"⚙️\",
+      \"description\": \"Instruksi langkah demi langkah yang spesifik dan teknis (Bahasa Indonesia).\"
     }
   ],
   \"db_schemas\": [
     {
-      \"table_name\": \"Name of SQL table (e.g. users, profiles, user_skills)\",
-      \"table_desc\": \"Simple explanation of what this table stores (Bahasa Indonesia)\",
+      \"table_name\": \"users\",
+      \"table_desc\": \"Penjelasan singkat fungsi tabel ini (Bahasa Indonesia)\",
       \"columns\": [
         {
-          \"name\": \"column_name (e.g. id, user_id, status)\",
-          \"type\": \"Data type (e.g. BigInt (PK), VarChar(255), Timestamp)\",
-          \"nullable\": \"Yes / No\",
-          \"desc\": \"Simple explanation of this column (Bahasa Indonesia)\"
+          \"name\": \"id\",
+          \"type\": \"BigInt (PK, Auto Increment)\",
+          \"nullable\": \"No\",
+          \"desc\": \"Penjelasan singkat kolom (Bahasa Indonesia)\"
         }
       ]
     }
   ],
   \"costs\": [
     {
-      \"type\": \"one_time / recurring\",
-      \"name\": \"Name of the item (e.g. Domain .com)\",
+      \"type\": \"one_time\",
+      \"name\": \"Domain .com\",
       \"price\": 150000
+    },
+    {
+      \"type\": \"recurring\",
+      \"name\": \"VPS Hosting / bulan\",
+      \"price\": 50000
     }
   ]
 }";

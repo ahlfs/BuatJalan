@@ -78,6 +78,11 @@ return [
                 'key' => env('IYH_API_KEY'),
                 'model' => env('IYH_MODEL', 'claude-3-5-sonnet'),
             ],
+            'ninerouter' => [
+                'key' => env('NINEROUTER_API_KEY'),
+                'url' => env('NINEROUTER_BASE_URL', 'https://api.9router.com/v1'),
+                'model' => env('NINEROUTER_MODEL', 'gpt-4o-mini'),
+            ],
         ],
     ],
 

@@ -64,8 +64,8 @@
             
             <div class="flex flex-col gap-4">
                 @forelse($projects as $project)
-                    <div class="flex items-center justify-between p-4 bg-zinc-950 rounded-lg border border-white/5 hover:border-white/10 transition-colors">
-                        <div class="flex items-center gap-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-950 rounded-lg border border-white/5 hover:border-white/10 transition-colors gap-4">
+                        <div class="flex items-center gap-4 min-w-0 w-full sm:w-auto">
                             <div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-bold text-primary shrink-0 overflow-hidden">
                                 @if($project->logo_url)
                                     <img src="{{ $project->logo_url }}" class="w-6 h-6 object-contain" alt="{{ $project->title }}">
@@ -73,14 +73,14 @@
                                     <span class="text-sm font-extrabold text-primary">{{ strtoupper(substr($project->title, 0, 1)) }}</span>
                                 @endif
                             </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h3 class="text-sm font-semibold text-white">{{ $project->title }}</h3>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h3 class="text-sm font-semibold text-white truncate max-w-[140px] sm:max-w-none">{{ $project->title }}</h3>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded truncate max-w-[120px] sm:max-w-none">
                                         {{ $project->workspace->name ?? 'Personal' }}
                                     </span>
                                 </div>
-                                <p class="text-xs text-zinc-500 mt-1">
+                                <p class="text-xs text-zinc-500 mt-1 truncate">
                                     Tech Stack: 
                                     @if($project->techStacks->count() > 0)
                                         {{ $project->techStacks->pluck('name')->join(' + ') }}
@@ -90,12 +90,12 @@
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-6">
-                            <div class="flex flex-col items-end">
+                        <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t border-white/5 pt-3 sm:border-0 sm:pt-0">
+                            <div class="flex flex-col items-start sm:items-end">
                                 <span class="text-xs font-semibold text-green-500">PRD Ready</span>
                                 <span class="text-[10px] text-zinc-500 mt-0.5">Roadmap {{ $project->roadmaps->count() }} Langkah</span>
                             </div>
-                            <a href="/dashboard/projects/{{ $project->slug }}" class="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10 cursor-pointer">Buka</a>
+                            <a href="/dashboard/projects/{{ $project->slug }}" class="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs text-white border border-white/10 cursor-pointer select-none">Buka</a>
                         </div>
                     </div>
                 @empty
@@ -109,7 +109,7 @@
         </div>
 
         {{-- Workspace List Widget --}}
-        <div class="w-full bg-zinc-900 rounded-xl border border-white/10 shadow-sm p-6">
+        <div class="w-full bg-zinc-900 rounded-xl border border-white/10 shadow-sm p-6 mb-6">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h2 class="text-lg font-bold text-white">Daftar Workspace Anda</h2>
@@ -121,28 +121,28 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($workspaces as $ws)
-                    <div class="flex items-center justify-between p-4 bg-zinc-950 rounded-lg border {{ auth()->user()->current_workspace_id === $ws->id ? 'border-primary/30 bg-primary/5' : 'border-white/5 hover:border-white/10' }} transition-colors">
-                        <div class="flex items-center gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-950 rounded-lg border {{ auth()->user()->current_workspace_id === $ws->id ? 'border-primary/30 bg-primary/5' : 'border-white/5 hover:border-white/10' }} transition-colors gap-4">
+                        <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                             <div class="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
                                 {{ strtoupper(substr($ws->name, 0, 1)) }}
                             </div>
-                            <div class="flex flex-col">
-                                <span class="text-xs font-semibold text-white leading-tight flex items-center gap-1.5">
+                            <div class="flex flex-col min-w-0 flex-1">
+                                <span class="text-xs font-semibold text-white leading-tight flex items-center gap-1.5 truncate">
                                     {{ $ws->name }}
                                     @if(auth()->user()->current_workspace_id === $ws->id)
-                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" title="Workspace Aktif"></span>
+                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" title="Workspace Aktif"></span>
                                     @endif
                                 </span>
-                                <span class="text-[10px] text-zinc-500 flex items-center gap-1 mt-1">
+                                <span class="text-[10px] text-zinc-500 flex items-center gap-1 mt-1 truncate">
                                     <img src="{{ asset('assets/icon-images/emerald-icon.png') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Emerald">
                                     <span>{{ $ws->tokens_balance }} Token • 📁 {{ $ws->projects()->count() }} Proyek</span>
                                 </span>
                             </div>
                         </div>
                         
-                        <form action="{{ route('workspaces.switch', $ws->id) }}" method="POST" class="m-0">
+                        <form action="{{ route('workspaces.switch', $ws->id) }}" method="POST" class="m-0 w-full sm:w-auto flex justify-end border-t border-white/5 pt-3 sm:border-0 sm:pt-0">
                             @csrf
-                            <button type="submit" class="px-3 py-1.5 rounded text-xs transition-colors cursor-pointer select-none
+                            <button type="submit" class="px-3 py-1.5 rounded text-xs transition-colors cursor-pointer select-none w-full sm:w-auto text-center
                                 {{ auth()->user()->current_workspace_id === $ws->id ? 'bg-primary/20 text-primary border border-primary/20 font-semibold' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10' }}">
                                 {{ auth()->user()->current_workspace_id === $ws->id ? 'Aktif' : 'Beralih' }}
                             </button>

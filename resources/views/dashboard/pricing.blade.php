@@ -256,7 +256,7 @@
     {{-- CONFIRMATION MODAL --}}
     <div 
         x-show="showConfirmModal" 
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
         x-transition
         style="display: none;"
     >
@@ -322,7 +322,7 @@
     {{-- QRIS CHECKOUT MODAL --}}
     <div 
         x-show="showQrisModal" 
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
         x-transition
         style="display: none;"
     >
@@ -418,7 +418,7 @@
                         </p>
                     </div>
                 </div>
-            </div>/div>
+            </div>
 
         </div>
     </div>

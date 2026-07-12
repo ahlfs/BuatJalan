@@ -15,9 +15,11 @@
     genStep: @entangle('genStep'),
     
     showInsufficientModal: false,
+    showErrorModal: false,
+    errorMessage: '',
     currentTokens: {{ auth()->user()->currentWorkspace->tokens_balance ?? 0 }},
     
-    secondsRemaining: 30,
+    secondsRemaining: 120,
     timerInterval: null,
     
     get answeredCount() {
@@ -105,7 +107,7 @@
         }
         this.generating = true;
         this.genStep = 0;
-        this.secondsRemaining = 30;
+        this.secondsRemaining = 120;
         
         var self = this;
         this.timerInterval = setInterval(function() {
@@ -114,10 +116,10 @@
             }
         }, 1000);
         
-        setTimeout(function() { self.genStep = 1; }, 800);
-        setTimeout(function() { self.genStep = 2; }, 1600);
-        setTimeout(function() { self.genStep = 3; }, 2400);
-        setTimeout(function() { self.genStep = 4; }, 3200);
+        setTimeout(function() { self.genStep = 1; }, 1000);
+        setTimeout(function() { self.genStep = 2; }, 3000);
+        setTimeout(function() { self.genStep = 3; }, 6000);
+        setTimeout(function() { self.genStep = 4; }, 9000);
         setTimeout(function() {
             self.$wire.generateProjectBackend().then(function(result) {
                 clearInterval(self.timerInterval);
@@ -126,10 +128,11 @@
                 } else {
                     self.generating = false;
                     self.genStep = 0;
-                    alert(result && result.error ? result.error : 'Gagal menghasilkan proyek. Pastikan API Key di konfigurasi .env sudah benar.');
+                    self.errorMessage = result && result.error ? result.error : 'Gagal menghasilkan proyek. Pastikan API Key di konfigurasi .env sudah benar.';
+                    self.showErrorModal = true;
                 }
             });
-        }, 4000);
+        }, 2000);
     }
 }" class="max-w-4xl mx-auto py-2">
 
@@ -148,7 +151,7 @@
             <h2 class="text-2xl font-bold text-white mb-2">Menghasilkan PRD & Roadmap</h2>
             <p class="text-zinc-400 text-sm mb-2">AI sedang merancang spesifikasi kebutuhan dan rute belajar terbaik untuk aplikasi Anda.</p>
             <div class="mb-8 text-xs font-semibold text-primary flex items-center gap-1.5 justify-center">
-                <span class="inline-block w-2.5 h-2.5 rounded-full bg-primary/20 flex items-center justify-center">
+                <span class="w-2.5 h-2.5 rounded-full bg-primary/20 flex items-center justify-center">
                     <span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
                 </span>
                 Estimasi selesai: ~<span x-text="secondsRemaining">30</span> detik
@@ -219,7 +222,7 @@
                     x-model="description"
                     rows="8"
                     placeholder="Contoh: Saya ingin membuat aplikasi pencatat keuangan harian otomatis dengan integrasi AI. Pengguna bisa mengunggah struk belanja dan AI akan otomatis mengkategorikan transaksi serta memberikan analisis budget bulanan..."
-                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/80 transition-all leading-relaxed"
+                    class="w-full bg-zinc-950 border border-white/10 rounded-xl p-4 text-white text-sm placeholder:text-zinc-600 focus:outline-none focus:border-primary/80 focus:ring-1 focus:ring-primary/80 transition-all leading-relaxed custom-scrollbar resize-none"
                 ></textarea>
             </div>
 
@@ -411,7 +414,7 @@
                         x-model="q1"
                         rows="2"
                         placeholder="Ketik jawaban..."
-                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-colors"
+                        class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs placeholder:text-zinc-700 focus:outline-none focus:border-primary transition-colors custom-scrollbar resize-none"
                     ></textarea>
                 </div>
 
@@ -596,6 +599,34 @@
                         Tambah
                     </button>
                 </div>
+        </div>
+    </div>
+
+    {{-- ERROR NOTIFICATION MODAL --}}
+    <div 
+        x-show="showErrorModal" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showErrorModal = false"></div>
+        <div class="relative bg-zinc-900 border border-red-500/20 rounded-2xl w-full max-w-md p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+                    <span class="text-xl">⚠️</span>
+                </div>
+                
+                <h3 class="text-base font-bold text-white mb-2">Gagal Memproses Proyek</h3>
+                <p class="text-xs text-zinc-400 mb-6 leading-relaxed" x-text="errorMessage">
+                    Gagal menghasilkan proyek. Pastikan API Key di konfigurasi .env sudah benar.
+                </p>
+                
+                <button 
+                    @click="showErrorModal = false"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                >
+                    Tutup
+                </button>
             </div>
         </div>
     </div>

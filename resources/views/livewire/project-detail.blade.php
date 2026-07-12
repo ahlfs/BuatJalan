@@ -11,6 +11,12 @@
     projectDesc: @js($project->description),
     editInfoModalOpen: false,
     
+    secondsRemaining: 120,
+    timerInterval: null,
+    
+    showErrorModal: false,
+    errorMessage: '',
+    
     openEditModal() {
         if (this.currentTokens < 10) {
             this.showInsufficientModal = true;
@@ -34,12 +40,21 @@
         }
         this.updatingProject = true;
         this.updateStep = 0;
+        this.secondsRemaining = 120;
+        
         let self = this;
-        setTimeout(() => { self.updateStep = 1; }, 800);
-        setTimeout(() => { self.updateStep = 2; }, 1600);
-        setTimeout(() => { self.updateStep = 3; }, 2400);
+        this.timerInterval = setInterval(() => {
+            if (self.secondsRemaining !== 1) {
+                self.secondsRemaining--;
+            }
+        }, 1000);
+        
+        setTimeout(() => { self.updateStep = 1; }, 1000);
+        setTimeout(() => { self.updateStep = 2; }, 3000);
+        setTimeout(() => { self.updateStep = 3; }, 6000);
         setTimeout(() => {
             self.$wire.updateProjectBackend(self.$wire.editRequest).then((result) => {
+                clearInterval(self.timerInterval);
                 self.updatingProject = false;
                 self.updateStep = 0;
                 if (result && result.success) {
@@ -47,10 +62,11 @@
                     self.projectTitle = result.title;
                     self.projectDesc = result.description;
                 } else {
-                    alert(result && result.error ? result.error : 'Gagal memperbarui proyek.');
+                    self.errorMessage = result && result.error ? result.error : 'Gagal memperbarui proyek.';
+                    self.showErrorModal = true;
                 }
             });
-        }, 3200);
+        }, 2000);
     }
 }" class="flex flex-col gap-6 font-sans">
     
@@ -82,38 +98,38 @@
     </div>
 
     {{-- Tabs Navigation Bar --}}
-    <div class="flex border-b border-white/5 gap-1 select-none">
+    <div class="flex border-b border-white/5 gap-1 select-none overflow-x-auto whitespace-nowrap scrollbar-none w-full">
         <button 
             @click="tab = 'techstack'"
-            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer"
+            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer shrink-0"
             :class="tab === 'techstack' ? 'border-primary text-primary font-bold' : 'border-transparent text-zinc-400 hover:text-white'"
         >
             Tech Stack
         </button>
         <button 
             @click="tab = 'roadmap'"
-            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer"
+            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer shrink-0"
             :class="tab === 'roadmap' ? 'border-primary text-primary font-bold' : 'border-transparent text-zinc-400 hover:text-white'"
         >
             Roadmap
         </button>
         <button 
             @click="tab = 'schema'"
-            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer"
+            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer shrink-0"
             :class="tab === 'schema' ? 'border-primary text-primary font-bold' : 'border-transparent text-zinc-400 hover:text-white'"
         >
             Skema Database
         </button>
         <button 
             @click="tab = 'costs'"
-            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer"
+            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer shrink-0"
             :class="tab === 'costs' ? 'border-primary text-primary font-bold' : 'border-transparent text-zinc-400 hover:text-white'"
         >
             Biaya
         </button>
         <button 
             @click="tab = 'export'"
-            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer"
+            class="px-5 py-3 text-sm font-semibold border-b-2 transition-all cursor-pointer shrink-0"
             :class="tab === 'export' ? 'border-primary text-primary font-bold' : 'border-transparent text-zinc-400 hover:text-white'"
         >
             Export Context
@@ -502,7 +518,13 @@ Columns:
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <h3 class="text-sm font-bold text-white mb-4">Memproses Pembaruan Proyek...</h3>
+                <h3 class="text-sm font-bold text-white mb-2">Memproses Pembaruan Proyek...</h3>
+                <div class="mb-4 text-xs font-semibold text-primary flex items-center gap-1.5 justify-center">
+                    <span class="w-2.5 h-2.5 rounded-full bg-primary/20 flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+                    </span>
+                    Estimasi selesai: ~<span x-text="secondsRemaining">120</span> detik
+                </div>
                 <div class="w-full max-w-xs space-y-2 text-left bg-zinc-900/60 border border-white/5 rounded-lg p-4">
                     <div class="flex items-center gap-2 text-xs">
                         <span :class="updateStep >= 1 ? 'text-primary' : 'text-zinc-500'">✓</span>
@@ -666,6 +688,34 @@ Columns:
                         <span>Top Up Token</span> 🚀
                     </a>
                 </div>
+        </div>
+    </div>
+
+    {{-- ERROR NOTIFICATION MODAL --}}
+    <div 
+        x-show="showErrorModal" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="showErrorModal = false"></div>
+        <div class="relative bg-zinc-900 border border-red-500/20 rounded-2xl w-full max-w-md p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+                    <span class="text-xl">⚠️</span>
+                </div>
+                
+                <h3 class="text-base font-bold text-white mb-2">Gagal Memproses Proyek</h3>
+                <p class="text-xs text-zinc-400 mb-6 leading-relaxed" x-text="errorMessage">
+                    Gagal memperbarui proyek. Silakan coba kembali beberapa saat lagi.
+                </p>
+                
+                <button 
+                    @click="showErrorModal = false"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                >
+                    Tutup
+                </button>
             </div>
         </div>
     </div>

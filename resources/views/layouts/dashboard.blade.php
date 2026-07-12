@@ -51,41 +51,7 @@
           @resize.window="checkSize()"
           class="bg-zinc-950 text-white min-h-screen font-sans antialiased overflow-hidden flex items-center justify-center">
 
-        {{-- Toast Notification --}}
-        @if(session('success'))
-            <div 
-                x-data="{ show: true }" 
-                x-show="show" 
-                x-init="setTimeout(() => show = false, 4000)"
-                x-transition
-                class="fixed top-6 right-6 z-50 flex items-center gap-3 bg-zinc-900 border border-emerald-500/30 text-white rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-top duration-300"
-            >
-                <span class="text-emerald-400 text-lg">✓</span>
-                <div class="flex flex-col">
-                    <span class="text-xs font-bold text-emerald-400">Sukses</span>
-                    <span class="text-[11px] text-zinc-400">{{ session('success') }}</span>
-                </div>
-                <button @click="show = false" class="ml-4 text-zinc-500 hover:text-white text-xs font-bold">✕</button>
-            </div>
-        @endif
 
-        @if(session('error'))
-            <div 
-                x-data="{ show: true }" 
-                x-show="show" 
-                x-init="setTimeout(() => show = false, 5000)"
-                x-transition
-                class="fixed top-6 right-6 z-50 flex items-center gap-3 bg-zinc-900 border border-rose-500/30 text-white rounded-xl px-4 py-3 shadow-2xl animate-in slide-in-from-top duration-300"
-            >
-                <span class="text-rose-400 text-lg">✕</span>
-                <div class="flex flex-col">
-                    <span class="text-xs font-bold text-rose-400">Error</span>
-                    <span class="text-[11px] text-zinc-400">{{ session('error') }}</span>
-                </div>
-                <button @click="show = false" class="ml-4 text-zinc-500 hover:text-white text-xs font-bold">✕</button>
-            </div>
-        @endif
-        
         <div class="relative w-full h-screen bg-zinc-950 flex overflow-hidden">
             
             {{-- Mobile Sidebar Backdrop Overlay --}}
@@ -422,6 +388,7 @@
                                     <option value="buatjalan">BuatJalan AI (Default - Recommended)</option>
                                     <option value="gemini">Custom Gemini API Key</option>
                                     <option value="openai">Custom OpenAI API Key</option>
+                                    <option value="9router">Custom 9router API Key</option>
                                 </select>
                                 <p class="text-[10px] text-zinc-400 leading-relaxed mt-1">
                                     Pilih sumber infrastruktur AI yang ingin digunakan untuk memproses pembuatan dan analisis proyek. <span class="text-emerald-400 font-semibold">(Catatan: Jika Anda tidak menggunakan BuatJalan AI, akun Anda tidak akan dikenakan biaya/charge Token workspace).</span>
@@ -517,6 +484,47 @@
                                     </button>
                                     <span x-show="apiTestResult === 'success'" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 animate-in fade-in zoom-in duration-200" style="display: none;">
                                         ✅ Koneksi API Key OpenAI Sukses!
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Option 4: 9router API Key (Custom) --}}
+                            <div x-show="apiProvider === '9router'" class="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200" style="display: none;">
+                                <div class="space-y-3">
+                                    <div class="space-y-1.5">
+                                        <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Custom 9router API Key</label>
+                                        <input 
+                                            type="password" 
+                                            placeholder="Masukkan 9router API Key..."
+                                            class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                    <div class="space-y-1.5">
+                                        <label class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">9router Base URL (Optional)</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="https://api.9router.com/v1"
+                                            class="w-full bg-zinc-950 border border-white/10 rounded-xl p-3 text-white text-xs focus:outline-none focus:border-primary transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-zinc-400 leading-relaxed">
+                                    Gunakan kuota routing LLM 9router kustom Anda. Request AI pembuatan modul proyek akan dikirimkan langsung ke 9router tanpa memotong Token workspace.
+                                </p>
+                                <div class="pt-1 flex items-center gap-3">
+                                    <button 
+                                        @click="testApi()"
+                                        :disabled="testingApi"
+                                        class="bg-zinc-850 hover:bg-zinc-800 disabled:opacity-50 text-white font-semibold py-1.5 px-3 rounded-lg text-[10px] transition-colors cursor-pointer border border-white/5 select-none flex items-center gap-1.5"
+                                    >
+                                        <svg x-show="testingApi" class="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" style="display: none;">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="testingApi ? 'Menguji...' : 'Uji Koneksi API'"></span>
+                                    </button>
+                                    <span x-show="apiTestResult === 'success'" class="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 animate-in fade-in zoom-in duration-200" style="display: none;">
+                                        ✅ Koneksi 9router Berhasil Terhubung!
                                     </span>
                                 </div>
                             </div>
@@ -1050,7 +1058,7 @@
         {{-- DELETE WORKSPACE CONFIRMATION SUB-MODAL --}}
         <div 
             x-show="deleteWorkspaceModalOpen" 
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             x-transition
             style="display: none;"
         >
@@ -1101,7 +1109,7 @@
         {{-- CANCEL INVITATION CONFIRMATION SUB-MODAL --}}
         <div 
             x-show="cancelInviteModalOpen" 
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             x-transition
             style="display: none;"
         >
@@ -1138,29 +1146,38 @@
             </div>
         </div>
 
-        {{-- Session Flash Toast Alert --}}
-        @if(session('success'))
+        {{-- Session Flash Toast Alerts (Responsive & Premium) --}}
+        @if(session('success') || session('error'))
             <div 
                 x-data="{ show: true }" 
                 x-show="show" 
-                x-init="setTimeout(() => show = false, 4000)"
+                x-init="setTimeout(() => show = false, {{ session('success') ? 4000 : 5000 }})"
                 x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-2 sm:translate-y-0 sm:translate-x-2"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-2"
                 x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0"
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0"
-                class="fixed bottom-5 right-5 z-[110] max-w-sm w-full bg-zinc-900 border border-emerald-500/30 rounded-xl shadow-2xl p-4 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300"
+                class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:bottom-5 sm:max-w-sm z-110 bg-zinc-950/95 backdrop-blur-md border rounded-xl shadow-2xl p-3 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300 {{ session('success') ? 'border-emerald-500/30' : 'border-rose-500/30' }}"
             >
-                <div class="flex items-center gap-2.5">
-                    <div class="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-bold shrink-0">
-                        ✓
-                    </div>
-                    <div class="text-xs font-semibold text-white">
-                        {{ session('success') }}
-                    </div>
+                <div class="flex items-center gap-2.5 min-w-0">
+                    @if(session('success'))
+                        <div class="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold shrink-0">
+                            ✓
+                        </div>
+                        <div class="text-[11px] font-semibold text-white truncate">
+                            {{ session('success') }}
+                        </div>
+                    @else
+                        <div class="w-5 h-5 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 text-xs font-bold shrink-0">
+                            ✕
+                        </div>
+                        <div class="text-[11px] font-semibold text-white truncate">
+                            {{ session('error') }}
+                        </div>
+                    @endif
                 </div>
-                <button @click="show = false" class="text-zinc-500 hover:text-white transition-colors p-1 cursor-pointer">
+                <button @click="show = false" class="text-zinc-500 hover:text-white transition-colors p-1 cursor-pointer shrink-0">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>

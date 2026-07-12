@@ -76,13 +76,14 @@ class AIService
                         Log::warning("Gemini API key index {$keyIndexNum} failed. Response: {$lastError}");
                         continue;
                     }
-                } elseif (in_array($provider, ['openai', 'xai', 'deepseek', 'openrouter', 'iyh'])) {
+                } elseif (in_array($provider, ['openai', 'xai', 'deepseek', 'openrouter', 'iyh', 'ninerouter'])) {
                     $endpoints = [
                         'openai' => 'https://api.openai.com/v1/chat/completions',
                         'xai' => 'https://api.x.ai/v1/chat/completions',
                         'deepseek' => 'https://api.deepseek.com/chat/completions',
                         'openrouter' => 'https://openrouter.ai/api/v1/chat/completions',
                         'iyh' => 'https://api.iyh.app/v1/chat/completions',
+                        'ninerouter' => rtrim($providerConfig['url'] ?? 'https://api.9router.com/v1', '/') . '/chat/completions',
                     ];
 
                     $request = Http::timeout(120)->withToken($apiKey);
@@ -99,12 +100,32 @@ class AIService
                         'messages' => [
                             ['role' => 'user', 'content' => $prompt]
                         ],
-                        'response_format' => ['type' => 'json_object']
+                        'response_format' => ['type' => 'json_object'],
+                        'stream' => false,
                     ]);
 
                     if ($response->successful()) {
-                        $body = $response->json();
-                        $rawJson = $body['choices'][0]['message']['content'] ?? '';
+                        $rawBody = $response->body();
+                        if (Str::startsWith(trim($rawBody), 'data:')) {
+                            $lines = explode("\n", $rawBody);
+                            $rawJson = '';
+                            foreach ($lines as $line) {
+                                $line = trim($line);
+                                if (Str::startsWith($line, 'data:')) {
+                                    $dataText = trim(Str::after($line, 'data:'));
+                                    if ($dataText === '[DONE]') {
+                                        continue;
+                                    }
+                                    $chunk = json_decode($dataText, true);
+                                    if (isset($chunk['choices'][0]['delta']['content'])) {
+                                        $rawJson .= $chunk['choices'][0]['delta']['content'];
+                                    }
+                                }
+                            }
+                        } else {
+                            $body = $response->json();
+                            $rawJson = $body['choices'][0]['message']['content'] ?? '';
+                        }
                     } else {
                         $lastError = $response->body() ?: $response->reason();
                         Log::warning(strtoupper($provider) . " API key index {$keyIndexNum} failed. Response: {$lastError}");
@@ -140,19 +161,50 @@ class AIService
                 if ($rawJson !== null) {
                     // Clean up code block ticks if AI accidentally wraps it
                     $rawJson = trim($rawJson);
+
+                    // 1. Remove <think>...</think> tags (e.g. DeepSeek R1, Qwen3 thinking models)
+                    if (preg_match('/<think>.*?<\/think>/is', $rawJson)) {
+                        $rawJson = preg_replace('/<think>.*?<\/think>/is', '', $rawJson);
+                        $rawJson = trim($rawJson);
+                    }
+
+                    // 2. Strip markdown code block wrappers
                     if (Str::startsWith($rawJson, '```json')) {
                         $rawJson = Str::after($rawJson, '```json');
+                    } elseif (Str::startsWith($rawJson, '```')) {
+                        $rawJson = Str::after($rawJson, '```');
                     }
                     if (Str::endsWith($rawJson, '```')) {
                         $rawJson = Str::beforeLast($rawJson, '```');
                     }
                     $rawJson = trim($rawJson);
 
+                    // 3. Extract first JSON object block (handles conversational prefix/suffix)
+                    if (!Str::startsWith($rawJson, '{')) {
+                        if (preg_match('/\{.*\}/s', $rawJson, $matches)) {
+                            $rawJson = $matches[0];
+                        }
+                    }
+
+                    // 4. Attempt to repair truncated JSON (model cut off mid-response)
+                    //    Count unmatched braces and close them
                     $data = json_decode($rawJson, true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        $repaired = static::repairTruncatedJson($rawJson);
+                        if ($repaired !== null) {
+                            $data = json_decode($repaired, true);
+                            if (json_last_error() === JSON_ERROR_NONE) {
+                                Log::warning("{$provider} response was truncated and auto-repaired.");
+                                $rawJson = $repaired;
+                            }
+                        }
+                    }
 
                     if (json_last_error() !== JSON_ERROR_NONE || empty($data['title'])) {
-                        Log::error("Failed to parse JSON response from {$provider} (key index {$keyIndexNum}). Raw response: " . $rawJson);
-                        $lastError = 'Gagal melakukan parsing JSON dari model AI.';
+                        $jsonErrorMsg = json_last_error_msg();
+                        $tailSnippet  = mb_substr($rawJson, -300);
+                        Log::error("Failed to parse JSON response from {$provider} (key index {$keyIndexNum}). JSON error: {$jsonErrorMsg}. Tail of raw response: ...{$tailSnippet}");
+                        $lastError = 'Gagal melakukan parsing JSON dari model AI. (' . $jsonErrorMsg . ')';
                         continue;
                     }
 
@@ -172,5 +224,69 @@ class AIService
         return [
             'error' => "Semua API Key (" . $totalKeys . ") untuk " . strtoupper($provider) . " gagal digunakan atau habis kuotanya. Error terakhir: {$lastError}"
         ];
+    }
+
+    /**
+     * Attempt to repair a truncated JSON string by closing any unmatched braces/brackets.
+     * This handles cases where a model's response is cut off before completion (e.g. token limit).
+     *
+     * @param string $json
+     * @return string|null Repaired JSON string, or null if it cannot be repaired.
+     */
+    protected static function repairTruncatedJson(string $json): ?string
+    {
+        $stack      = [];
+        $inString   = false;
+        $escape     = false;
+        $lastGoodPos = 0;
+
+        for ($i = 0, $len = strlen($json); $i < $len; $i++) {
+            $char = $json[$i];
+
+            if ($escape) {
+                $escape = false;
+                continue;
+            }
+            if ($char === '\\' && $inString) {
+                $escape = true;
+                continue;
+            }
+            if ($char === '"') {
+                $inString = !$inString;
+                if (!$inString) {
+                    $lastGoodPos = $i;
+                }
+                continue;
+            }
+            if ($inString) {
+                continue;
+            }
+
+            if ($char === '{' || $char === '[') {
+                $stack[] = $char === '{' ? '}' : ']';
+            } elseif ($char === '}' || $char === ']') {
+                if (!empty($stack) && end($stack) === $char) {
+                    array_pop($stack);
+                    $lastGoodPos = $i;
+                }
+            } elseif (!in_array($char, [',', ':', ' ', "\n", "\r", "\t"])) {
+                $lastGoodPos = $i;
+            }
+        }
+
+        if (empty($stack)) {
+            // JSON is already balanced
+            return $json;
+        }
+
+        // Trim trailing comma or whitespace before closing
+        $truncated = rtrim(substr($json, 0, $lastGoodPos + 1), ", \t\n\r");
+
+        // Close all open containers in reverse order
+        $repaired = $truncated . implode('', array_reverse($stack));
+
+        // Validate repaired result
+        json_decode($repaired);
+        return json_last_error() === JSON_ERROR_NONE ? $repaired : null;
     }
 }

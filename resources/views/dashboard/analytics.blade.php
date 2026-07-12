@@ -124,8 +124,7 @@
                             @endphp
                             <div class="relative group">
                                 {{-- Timeline Marker --}}
-                                <div class="absolute left-[-21px] top-1.5 w-[12px] h-[12px] rounded-full border-4 border-zinc-950 group-hover:scale-125 transition-transform 
-                                    @if($color === 'emerald') bg-emerald-500 @elseif($color === 'amber') bg-amber-500 @else bg-blue-500 @endif"></div>
+                                <div class="absolute left-[-21px] top-1.5 w-[12px] h-[12px] rounded-full border-4 border-zinc-950 group-hover:scale-125 transition-transform bg-{{ $color }}-500"></div>
                                 
                                 <div class="bg-zinc-900/30 border border-white/5 hover:border-white/10 p-4 rounded-2xl space-y-1.5 transition-colors">
                                     <div class="flex items-start justify-between gap-4">
