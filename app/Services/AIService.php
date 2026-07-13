@@ -186,7 +186,10 @@ class AIService
                         }
                     }
 
-                    // 4. Attempt to repair truncated JSON (model cut off mid-response)
+                    // 4. Sanitize JSON (remove comments, trailing commas, escape literal control characters)
+                    $rawJson = static::sanitizeJson($rawJson);
+
+                    // 5. Attempt to repair truncated JSON (model cut off mid-response)
                     //    Count unmatched braces and close them
                     $data = json_decode($rawJson, true);
                     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -224,6 +227,70 @@ class AIService
         return [
             'error' => "Semua API Key (" . $totalKeys . ") untuk " . strtoupper($provider) . " gagal digunakan atau habis kuotanya. Error terakhir: {$lastError}"
         ];
+    }
+
+    /**
+     * Sanitize JSON string before decoding.
+     * Removes JavaScript-style comments, trailing commas, and escapes literal control characters.
+     *
+     * @param string $json
+     * @return string
+     */
+    protected static function sanitizeJson(string $json): string
+    {
+        // 1. Remove comments
+        // Multi-line comments: /* ... */
+        $json = preg_replace('!/\*.*?\*/!s', '', $json);
+        // Single-line comments: // ..., but ignore double-slashes in URLs (http:// or https://)
+        $json = preg_replace('!^[ \t]*//.*$!m', '', $json); 
+        $json = preg_replace('!(?<!:|http:|https:)//.*$!m', '', $json); 
+
+        // 2. Remove trailing commas before closing braces/brackets
+        $json = preg_replace('/,\s*([\]}])/m', '$1', $json);
+
+        // 3. Fix unescaped literal control characters inside double quotes
+        $len = strlen($json);
+        $clean = '';
+        $inString = false;
+        $escape = false;
+
+        for ($i = 0; $i < $len; $i++) {
+            $char = $json[$i];
+
+            if ($escape) {
+                $clean .= $char;
+                $escape = false;
+                continue;
+            }
+
+            if ($char === '\\' && $inString) {
+                $clean .= $char;
+                $escape = true;
+                continue;
+            }
+
+            if ($char === '"') {
+                $inString = !$inString;
+                $clean .= $char;
+                continue;
+            }
+
+            if ($inString) {
+                if ($char === "\n") {
+                    $clean .= '\n';
+                } elseif ($char === "\r") {
+                    $clean .= '\r';
+                } elseif ($char === "\t") {
+                    $clean .= '\t';
+                } else {
+                    $clean .= $char;
+                }
+            } else {
+                $clean .= $char;
+            }
+        }
+
+        return $clean;
     }
 
     /**

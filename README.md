@@ -56,3 +56,24 @@
   * **404 (Not Found)**: Efek pendaran hijau/emerald.
   * **403 (Forbidden)**: Efek pendaran kuning/amber.
   * **500 (Internal Server Error)**: Efek pendaran merah.
+
+---
+
+## 🛠️ Tech Stack & Libraries
+
+Proyek ini dibangun menggunakan arsitektur modern berkinerja tinggi dengan kombinasi teknologi berikut:
+
+### Core Framework & Backend
+* **Laravel 12**: Framework PHP utama untuk penanganan routing, database relasional, autentikasi, dan middleware keamanan.
+* **Livewire v3**: Framework full-stack untuk membuat komponen UI dinamis dan reaktif tanpa menulis Javascript manual yang berlebihan.
+* **PHP 8.2+**: Bahasa pemrograman backend utama yang digunakan untuk logika bisnis dan integrasi API.
+
+### Frontend & Styling
+* **Tailwind CSS**: Utility-first CSS framework untuk implementasi UI bertema gelap premium secara responsif.
+* **Alpine.js**: Library Javascript ringan (bawaan Livewire v3) untuk manajemen state client-side, transisi animasi modal, dan form wizard.
+* **Vite**: Bundler aset modern untuk proses kompilasi CSS/JS yang super cepat.
+
+### Integrasi Library & Paket Eksternal
+* **Laravel Socialite**: Autentikasi OAuth sosial media (Google & GitHub login/integration).
+* **Laravel HTTP Client (Guzzle)**: Penghubung komunikasi API asinkron dengan batas waktu (timeout) 120 detik ke Google Gemini API dan 9router API.
+* **Doku/Simulasi**: Logika simulasi pembayaran QRIS menggunakan penanganan status transaksi di frontend.

@@ -320,6 +320,31 @@ STRUKTUR JSON YANG HARUS DIKEMBALIKAN:
     }
 
     /**
+     * Delete the current project from the database.
+     */
+    public function deleteProject()
+    {
+        $user = auth()->user();
+        
+        // Ensure user belongs to the project's workspace
+        if (!$user->workspaces->contains($this->project->workspace_id)) {
+            abort(403, 'Anda tidak memiliki akses untuk menghapus proyek ini.');
+        }
+
+        $projectTitle = $this->project->title;
+
+        // Delete the project (related elements will be cascade-deleted by DB)
+        $this->project->delete();
+
+        // Dispatch dynamic sidebar refresh event
+        $this->dispatch('refresh-sidebar');
+
+        // Redirect to dashboard home with success message
+        session()->flash('success', "Proyek '{$projectTitle}' berhasil dihapus.");
+        return redirect()->route('dashboard.home');
+    }
+
+    /**
      * Render the Livewire component.
      */
     public function render()

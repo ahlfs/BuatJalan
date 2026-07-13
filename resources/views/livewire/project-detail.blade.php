@@ -16,6 +16,7 @@
     
     showErrorModal: false,
     errorMessage: '',
+    deleteModalOpen: false,
     
     openEditModal() {
         if (this.currentTokens < 10) {
@@ -83,6 +84,10 @@
         </div>
         
         <div class="flex items-center gap-3">
+            <button @click="deleteModalOpen = true" class="border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <span>Hapus Project</span>
+            </button>
             <button @click="openEditModal()" class="border border-white/10 hover:border-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path></svg>
                 <span>Ubah Project</span>
@@ -692,6 +697,7 @@ Columns:
                 </div>
         </div>
     </div>
+</div>
 
     {{-- ERROR NOTIFICATION MODAL --}}
     <div 
@@ -718,6 +724,43 @@ Columns:
                 >
                     Tutup
                 </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- DELETE PROJECT CONFIRMATION MODAL --}}
+    <div 
+        x-show="deleteModalOpen" 
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition
+        style="display: none;"
+    >
+        <div class="absolute inset-0" @click="deleteModalOpen = false"></div>
+        <div class="relative bg-zinc-900 border border-red-500/20 rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-xl text-red-400 mb-4 animate-bounce">
+                    ⚠️
+                </div>
+                
+                <h3 class="text-base font-bold text-white mb-2">Hapus Proyek Ini?</h3>
+                <p class="text-xs text-zinc-400 mb-6 leading-relaxed">
+                    Apakah Anda yakin ingin menghapus proyek <strong class="text-white" x-text="projectTitle"></strong>? Tindakan ini akan menghapus permanen PRD, Tech Stack, Roadmap, dan Skema Database yang telah di-generate.
+                </p>
+                
+                <div class="flex gap-3 w-full">
+                    <button 
+                        @click="deleteModalOpen = false"
+                        class="flex-1 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        @click="deleteModalOpen = false; $wire.deleteProject();"
+                        class="flex-1 bg-red-600 hover:bg-red-500 text-white border border-red-500/20 px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                    >
+                        Ya, Hapus
+                    </button>
+                </div>
             </div>
         </div>
     </div>
