@@ -265,7 +265,7 @@
                 {{-- Table: One-time Cost --}}
                 <div class="bg-zinc-900 border border-white/10 rounded-xl p-5 space-y-4">
                     <div class="flex items-center gap-2">
-                        <span class="text-lg">💰</span>
+                        <img src="{{ asset('assets/svg/money-icon.svg') }}" alt="Money Icon" class="w-6 h-6 object-contain">
                         <h3 class="text-sm font-bold text-white">Biaya Sekali (One-Time)</h3>
                     </div>
                     <div class="divide-y divide-white/5">
@@ -283,7 +283,7 @@
                 {{-- Table: Recurring Cost --}}
                 <div class="bg-zinc-900 border border-white/10 rounded-xl p-5 space-y-4">
                     <div class="flex items-center gap-2">
-                        <span class="text-lg">🔁</span>
+                        <img src="{{ asset('assets/svg/up-icon.svg') }}" alt="Recycle Icon" class="w-6 h-6 object-contain">
                         <h3 class="text-sm font-bold text-white">Biaya Berkelanjutan (Bulanan)</h3>
                     </div>
                     <div class="divide-y divide-white/5">
@@ -349,7 +349,9 @@ Columns:
             {{-- Main Info Header --}}
             <div class="bg-zinc-900 border border-white/10 rounded-xl p-6 space-y-4">
                 <div class="flex items-center gap-3">
-                    <span class="text-2xl">🤖</span>
+                    <span class="text-2xl">
+                        <img src="{{ asset('assets/svg/robot-icon.svg') }}" alt="Export Icon" class="w-10 h-10 object-contain">
+                    </span>
                     <div>
                         <h2 class="text-base font-bold text-white">Export AI Coding Context</h2>
                         <p class="text-xs text-zinc-400 mt-0.5">Umpankan spesifikasi lengkap proyek ini ke AI Coding Assistant Anda secara instan untuk efisiensi koding maksimal.</p>
@@ -375,7 +377,7 @@ Columns:
                 <div class="bg-zinc-900 border border-white/10 hover:border-white/20 rounded-xl p-6 flex flex-col justify-between space-y-6 transition-all group">
                     <div class="space-y-3">
                         <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                            📥
+                            <img src="{{ asset('assets/svg/file-icon.svg') }}" alt="File Icon" class="w-6 h-6 object-contain">
                         </div>
                         <div class="space-y-1">
                             <h3 class="text-sm font-bold text-white">Export as File</h3>
@@ -403,7 +405,7 @@ Columns:
                 <div class="bg-zinc-900 border border-white/10 hover:border-white/20 rounded-xl p-6 flex flex-col justify-between space-y-6 transition-all group">
                     <div class="space-y-3">
                         <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xl shrink-0 group-hover:bg-blue-500/20 transition-colors">
-                            🔗
+                            <img src="{{ asset('assets/svg/link-icon.svg') }}" alt="Link Icon" class="w-6 h-6 object-contain">
                         </div>
                         <div class="space-y-1">
                             <h3 class="text-sm font-bold text-white">Export as Link (Raw Markdown)</h3>

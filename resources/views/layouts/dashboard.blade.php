@@ -23,6 +23,7 @@
               createWorkspaceModalOpen: false,
               manageWorkspaceModalOpen: false,
               deleteWorkspaceModalOpen: false,
+              leaveWorkspaceModalOpen: false,
               deleteConfirmText: '',
               activeSettingsTab: 'general', 
               activeManageTab: 'tokens',
@@ -715,40 +716,45 @@
                         </button>
                         <button 
                             @click="activeManageTab = 'members'"
-                            class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full"
+                            class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 md:w-full"
                             :class="activeManageTab === 'members' ? 'bg-primary/10 text-primary' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                         >
-                            👥 Anggota ({{ count($members) }})
+                            <img src="{{ asset('assets/svg/collaborator-icon.svg') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Collaborator">
+                            <span>Anggota ({{ count($members) }})</span>
                         </button>
                         @if($isOwner)
                             <button 
                                 @click="activeManageTab = 'invite'"
-                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full"
+                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 md:w-full"
                                 :class="activeManageTab === 'invite' ? 'bg-primary/10 text-primary' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                             >
-                                📩 Undang Kolaborator
+                                <img src="{{ asset('assets/svg/mail-icon.svg') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Collaborator">
+                            <span>Undang Kolaborator</span>
                             </button>
                             <button 
                                 @click="activeManageTab = 'rename'"
-                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full"
+                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 md:w-full"
                                 :class="activeManageTab === 'rename' ? 'bg-primary/10 text-primary' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                             >
-                                📝 Ubah Nama
+                                <img src="{{ asset('assets/svg/question-icon.svg') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Collaborator">
+                                <span>Ubah Nama</span>
                             </button>
                             <button 
                                 @click="activeManageTab = 'danger'"
-                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full"
+                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 md:w-full"
                                 :class="activeManageTab === 'danger' ? 'bg-red-500/10 text-red-400' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                             >
-                                ⚠️ Hapus Workspace
+                                <img src="{{ asset('assets/svg/warning-icon.svg') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="warning">
+                                <span>Hapus Workspace</span>
                             </button>
                         @else
                             <button 
                                 @click="activeManageTab = 'leave'"
-                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 md:w-full"
+                                class="text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 md:w-full"
                                 :class="activeManageTab === 'leave' ? 'bg-red-500/10 text-red-400' : 'text-zinc-400 hover:bg-white/5 hover:text-white'"
                             >
-                                🚪 Keluar Workspace
+                                <img src="{{ asset('assets/svg/out-icon.svg') }}" class="w-3.5 h-3.5 object-contain shrink-0" alt="Keluar Workspace">
+                                <span>Keluar Workspace</span>
                             </button>
                         @endif
                     </div>
@@ -931,12 +937,15 @@
                                     <h4 class="text-xs font-bold text-red-400">Peringatan Keluar dari Workspace</h4>
                                     <p class="text-[10px] text-zinc-400 leading-relaxed">Anda akan kehilangan akses ke seluruh proyek dan kolaborasi yang terdaftar di bawah workspace '{{ $currentWorkspace->name ?? '' }}'. Anda perlu diundang kembali oleh pemilik jika ingin bergabung lagi di masa mendatang.</p>
                                     
-                                    <form action="{{ route('workspaces.leave') }}" method="POST" class="m-0 pt-2" onsubmit="return confirm('Apakah Anda yakin ingin keluar dari workspace ini?');">
-                                        @csrf
-                                        <button type="submit" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold w-full transition-colors cursor-pointer text-center">
+                                    <div class="pt-2">
+                                        <button 
+                                            @click="leaveWorkspaceModalOpen = true"
+                                            type="button"
+                                            class="bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold w-full transition-colors cursor-pointer text-center select-none"
+                                        >
                                             Ya, Keluar dari Workspace
                                         </button>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -1099,6 +1108,46 @@
                                 class="w-full bg-red-600 hover:bg-red-500 disabled:bg-red-950/40 disabled:text-zinc-600 disabled:border-red-950/20 text-white border border-red-500/20 px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors disabled:cursor-not-allowed"
                             >
                                 Hapus Permanen
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- LEAVE WORKSPACE CONFIRMATION SUB-MODAL --}}
+        <div 
+            x-show="leaveWorkspaceModalOpen" 
+            class="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            x-transition
+            style="display: none;"
+        >
+            <div class="absolute inset-0" @click="leaveWorkspaceModalOpen = false"></div>
+            <div class="relative bg-zinc-900 border border-red-500/20 rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 animate-in fade-in scale-in duration-200">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-xl text-red-400 mb-4 animate-bounce">
+                        ⚠️
+                    </div>
+                    
+                    <h3 class="text-base font-bold text-white mb-2">Konfirmasi Keluar Workspace</h3>
+                    <p class="text-xs text-zinc-400 mb-6 leading-relaxed">
+                        Apakah Anda yakin ingin keluar dari workspace <strong class="text-white">'{{ $currentWorkspace->name ?? '' }}'</strong>? Anda akan kehilangan akses ke seluruh proyek di dalamnya dan harus diundang kembali oleh pemilik untuk bergabung lagi.
+                    </p>
+                    
+                    <div class="flex gap-3 w-full">
+                        <button 
+                            @click="leaveWorkspaceModalOpen = false"
+                            class="flex-1 border border-white/10 hover:border-white/20 text-zinc-300 hover:text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                            Batal
+                        </button>
+                        <form action="{{ route('workspaces.leave') }}" method="POST" class="flex-1 m-0">
+                            @csrf
+                            <button 
+                                type="submit" 
+                                class="w-full bg-red-600 hover:bg-red-500 text-white border border-red-500/20 px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors"
+                            >
+                                Ya, Keluar
                             </button>
                         </form>
                     </div>

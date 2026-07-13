@@ -18,12 +18,16 @@ class EnsureHasWorkspace
             
             // Check if user has any workspaces they belong to
             if ($user->workspaces()->count() === 0) {
+                // Initial registration gets 20 tokens, subsequent ones get 0
+                $hasBonus = (bool) $user->has_received_bonus;
+                $tokens = $hasBonus ? 0 : 20;
+
                 // Create a default workspace
                 $workspace = Workspace::create([
                     'owner_id' => $user->id,
                     'name' => 'Personal Workspace',
                     'slug' => 'personal-workspace-' . strtolower(Str::random(4)),
-                    'tokens_balance' => 20, // default starting tokens
+                    'tokens_balance' => $tokens,
                 ]);
 
                 // Attach as owner in pivot table
@@ -34,9 +38,10 @@ class EnsureHasWorkspace
                        ->whereNull('workspace_id')
                        ->update(['workspace_id' => $workspace->id]);
 
-                // Set current workspace ID for user
+                // Set current workspace ID and mark bonus as received
                 $user->update([
-                    'current_workspace_id' => $workspace->id
+                    'current_workspace_id' => $workspace->id,
+                    'has_received_bonus' => true
                 ]);
             } elseif (!$user->current_workspace_id) {
                 // Fallback: set active to first workspace they belong to

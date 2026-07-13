@@ -26,6 +26,7 @@ class User extends Authenticatable
         'github_id',
         'avatar',
         'current_workspace_id',
+        'has_received_bonus',
     ];
 
     /**
